@@ -16,3 +16,7 @@
 [submodule "apps/aethelgard_research_portal"]
 	path = apps/aethelgard_research_portal
 	url = https://github.com/AsheeshSrivastava/aethelgard-research-portal.git
+[submodule "projects/aethelgard-saga"]
+	path = projects/aethelgard-saga
+	url = https://github.com/AsheeshSrivastava/Aethelgard_Saga.git
+	branch = ai-enhancements
