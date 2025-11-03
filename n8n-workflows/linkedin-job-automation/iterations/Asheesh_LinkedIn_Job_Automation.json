@@ -1,0 +1,291 @@
+{
+  "name": "Asheesh_LinkedIn_Job_Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://rss.app/feeds/y708YSuVvuVLmHgB.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -976,
+        608
+      ],
+      "id": "fac4b7de-24aa-4ede-9f81-11cf8ec99c1c",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('RSS Read').item.json.link }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -544,
+        608
+      ],
+      "id": "5357f319-8c90-43be-a998-5009dd7ba3a2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an intelligent bot capable of pulling out data from a job listing site.",
+              "role": "system"
+            },
+            {
+              "content": "=Here's the job site:\n {{ $json.data }}"
+            },
+            {
+              "content": "Please output the data in JSON format, using the following structure:\n\n{\n\"company_name\": \"\",\n\"benefits\": \"\", //401K plan, medical, etc, please separate by commas\n\"job_description\": \"\", //please make it 200 characters or less\n\"location\": \"\"\n}",
+              "role": "assistant"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -352,
+        592
+      ],
+      "id": "53209144-5f9c-4d8a-8f80-981c993328f2",
+      "name": "OpenAI"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        608
+      ],
+      "id": "8cda7edf-1de1-480c-804e-e5e2cfb9f592",
+      "name": "Limit"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        608
+      ],
+      "id": "1fd673bc-49c5-4c5d-be72-4b2e78d97bac",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+          "mode": "list",
+          "cachedResultName": "Asheesh Job Listings"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $('RSS Read').item.json.title }}",
+            "Link": "={{ $('RSS Read').item.json.link }}",
+            "Date": "={{ $('RSS Read').item.json.pubDate }}",
+            "Company Name": "={{ $('OpenAI').item.json.message.content.company_name }}",
+            "Benefits": "={{ $('OpenAI').item.json.message.content.benefits }}",
+            "Job Description": "={{ $('OpenAI').item.json.message.content.job_description }}",
+            "Location": "={{ $('OpenAI').item.json.message.content.location }}",
+            "Rating": "={{ $('Message a model').item.json.message.content.rating }}",
+            "Match Explanation": "={{ $('Message a model').item.json.message.content.explanation }}",
+            "Cover Letter": "={{ $json.choices[0].message.content.cover_letter }}"
+          },
+          "matchingColumns": [
+            "Link"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        704,
+        576
+      ],
+      "id": "640a0b1f-a8f9-48e5-a765-da6d3ec4fea4",
+      "name": "Append or update row in sheet"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an intelligent bot rating how closely a job listing matches a candidate's profile on a scale of 0-5.\n\nScoring Criteria:\n- 2 points: Skills match perfectly (1 point for partial match)\n- 1 point: Right experience level (4-8 years for mid-senior roles)\n- 1 point: Remote or hybrid work option\n- 1 point: Job role aligns with past experience (program leadership, product, AI/ML)\n- 1 point: Technical skills align (Python, AI/ML, systems thinking, product architecture)\n- 1 point: Company/sector matches preferences (Ed-Tech, AI-first, learning products)\n\nBonus considerations:\n- AI Product Manager or Technical PM roles: +0.5\n- Startup/scale-up environment: +0.5\n- Salary range ₹8-12 LPA or above: Mention in explanation\n- January 2026 start date compatible: Mention in explanation\n\nReturn JSON with:\n{\n\"rating\": <number 0-5>,\n\"explanation\": \"<2-3 sentence explanation of why this score>\"\n}",
+              "role": "system"
+            },
+            {
+              "content": "=Here's the job listing details:\nCompany: {{ $json.message.content.company_name }}\nJob Description: {{ $json.message.content.job_description }}\nLocation: {{ $json.message.content.location }}\n\nCandidate Profile:\n\"\"\"\nAsheesh Ranjan Srivastava - AI-Native Builder & Founder\n\nOVERVIEW:\nAI-native builder with 6+ years in data analysis and program leadership. Founder of Quest & Crossfire, building AI-powered learning platforms. Currently completing MS in Computer Science (AI/ML) and OutSkill AI Engineering Bootcamp 2025.\n\nTARGET ROLES: AI Product Manager | Technical Product Manager (AI/ML) | AI Solutions Architect | Ed-Tech Product\nAVAILABLE: January 2026\nSALARY: ₹8-12 LPA\nLOCATION: Remote-first or Lucknow | Willing to relocate\n\nCORE SKILLS:\n- Systems Thinking & Product Architecture\n- AI-Native Development & AI Collaboration  \n- Data Analysis & MIS Design\n- Program Leadership (led 10-member teams)\n- Capacity Building (trained 400+ professionals)\n- Workflow Automation\n\nTECHNICAL STACK:\n- Languages: Python\n- AI/ML: OpenAI API, Hugging Face Transformers, GPT-3.5, BART, T5, Pegasus\n- Frameworks: Streamlit, Gradio\n- Automation: n8n, Workflow Design\n- Data: Power BI, Excel, MIS Systems\n- Tools: Git, Obsidian\n\nRECENT PROJECTS (2025):\n1. Multi-Model Text Summarization (4 AI models, 83% cost reduction)\n2. Multi-Persona Chatbot (Live: questandcrossfire.com/chatbot)\n3. Obsidian AI Assistant (Live: questandcrossfire.com/obsidian)\n4. Quest & Crossfire Platform (85% MVP, launching Q1 2026)\n\nEXPERIENCE HIGHLIGHTS:\n- Quest & Crossfire: Founder (June 2025 - Present)\n- Finish Society: M&E Executive (2021-2022) - Dashboards, MIS optimization\n- Piramal Foundation: Program Leader (2018-2020) - Led teams, trained 400+ professionals, coordinated 5 states\n- Kaivalya Education Foundation: Gandhi Fellow (2016-2018) - Data-driven coaching, capacity building\n\nKEY ACHIEVEMENTS:\n- 6+ years data/program leadership\n- 400+ professionals trained\n- 10-member teams led\n- 2 production AI apps deployed (3 weeks)\n- Scaled programs across 5 states\n- 50+ teachers coached\n\nEDUCATION:\n- MS Computer Science (AI/ML) - Woolf University (2025-2027) - In Progress\n- Master's Development Studies - IIT Guwahati (2014-2016)\n- B.Sc. Industrial Chemistry - Delhi University (2010-2014)\n\nCERTIFICATIONS:\n- OutSkill AI Engineering Bootcamp 2025\n- Business Intelligence using Power BI\n- Python for Data Science\n- Public Policy and Social Change\n\nAPPROACH:\n\"I'm an AI-native builder. I architect systems and partner with AI to implement them. This approach shipped production-ready platform in 3 weeks instead of months.\"\n\nPREFERENCES:\n- Remote-first or hybrid culture\n- Ed-Tech, Learning Products, or AI-first companies\n- Startup/scale-up environment\n- Mission: Products that help people learn, grow, navigate complexity\n\"\"\""
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -16,
+        592
+      ],
+      "id": "8c61788b-9874-4d8e-a2e5-dd792dda7dc6",
+      "name": "Message a model"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an expert at creating personalized, compelling cover letters. Create a cover letter that:\n1. Shows genuine interest in the specific role and company\n2. Highlights relevant experience (don't just repeat resume)\n3. Demonstrates understanding of the role requirements\n4. Shows personality and authentic voice (reflective, honest, systematic)\n5. Connects candidate's approach to company mission\n6. Keep it concise (300-400 words maximum)\n7. Professional but conversational tone\n\nAvoid:\n- Generic phrases like \"I am writing to apply\"\n- Simply listing resume bullets\n- Over-the-top enthusiasm or buzzwords\n- Being too formal or stiff",
+              "role": "system"
+            },
+            {
+              "content": "=Create a cover letter for this job:\n\nJob Title: {{ $('RSS Read').item.json.title }}\nCompany: {{ $('OpenAI').item.json.message.content.company_name }}\nLocation: {{ $('OpenAI').item.json.message.content.location }}\nJob Description: {{ $('OpenAI').item.json.message.content.job_description }}\nBenefits: {{ $('OpenAI').item.json.message.content.benefits }}\n\nCandidate Profile:\n\"\"\"\nAsheesh Ranjan Srivastava\nFounder, Quest & Crossfire | AI-Native Builder\nEmail: asheesh.srivastava@questandcrossfire.com\nLinkedIn: linkedin.com/in/asheesh-ranjan-srivastava\nGitHub: github.com/AsheeshSrivatava\nPortfolio: questandcrossfire.com\n\nPROFESSIONAL SUMMARY:\nAI-native builder with 6+ years combining systems thinking with AI collaboration to build products that help people learn and grow. Founder of Quest & Crossfire, currently building AI-powered learning platform while completing MS in Computer Science (AI/ML).\n\nWHAT I BRING:\n- Systems Thinking: Trained 400+ professionals, led 10-member teams, scaled programs across 5 states\n- AI-Native Development: Shipped 2 production apps in 3 weeks (questandcrossfire.com/obsidian & /chatbot)\n- Product Architecture: 85% MVP platform, launching Q1 2026\n- Data-Driven Leadership: 6+ years data analysis, MIS design, capacity building\n\nRECENT WORK:\n- Built Multi-Persona Chatbot with 4 AI personas, real-time streaming (Live)\n- Developed Multi-Model Text Summarization with 83% cost reduction\n- Created Obsidian AI Learning Assistant with dual AI providers (Live)\n- Building Quest & Crossfire: AI learning platform for Python & AI engineering\n\nTECHNICAL: Python, OpenAI API, Hugging Face, Streamlit, n8n automation, Power BI\n\nAPPROACH:\n\"I architect systems and partner with AI to implement them. I focus on vision, users, and architecture - AI handles implementation. This shipped production platform in 3 weeks vs months.\"\n\nEXPERIENCE:\n- Quest & Crossfire: Founder (2025-Present) - AI learning platform\n- Piramal Foundation: Program Leader (2018-2020) - Led teams, trained 400+\n- Kaivalya Education: Gandhi Fellow (2016-2018) - Data-driven coaching\n- Finish Society: M&E Executive (2021-2022) - Dashboards, MIS\n\nEDUCATION:\n- MS Computer Science (AI/ML) - Woolf University (2025-2027)\n- Master's Development Studies - IIT Guwahati\n- OutSkill AI Engineering Bootcamp 2025\n\nPHILOSOPHY:\nQuest & Crossfire tagline: \"Small fixes, big clarity\" - turning chaos into progress through evolving systems.\n\nAVAILABLE: January 2026\n\"\"\""
+            },
+            {
+              "content": "Return JSON:\n{\n\"cover_letter\": \"<the cover letter text here>\"\n}",
+              "role": "assistant"
+            }
+          ]
+        },
+        "simplify": false,
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        320,
+        592
+      ],
+      "id": "7f1db357-0f39-4ac2-b0f0-1101030c4c76",
+      "name": "Message a model1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

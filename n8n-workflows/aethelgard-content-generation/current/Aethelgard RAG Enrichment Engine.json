@@ -1,0 +1,308 @@
+{
+  "name": "Aethelgard RAG Enrichment Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "  // Access webhook data\n  let webhookData;\n  try {\n    webhookData = $('Webhook Trigger').first().json;\n  } catch (e) {\n    const allItems = $items();\n    webhookData = allItems.find(item => item.json.conceptId)?.json;\n  }\n\n  if (!webhookData || Object.keys(webhookData).length === 0) {\n    const inputs = $input.all();\n    for (const item of inputs) {\n      if (item.json.conceptId || item.json.body?.conceptId) {\n        webhookData = item.json;\n        break;\n      }\n    }\n  }\n\n  const conceptId = webhookData?.conceptId || webhookData?.body?.conceptId;\n\n  if (!conceptId) {\n    throw new Error('conceptId is missing');\n  }\n\n  // Get base content from binary data\n  const baseContentBinary = await this.helpers.getBinaryDataBuffer(0, 'data');\n  const baseContentText = baseContentBinary.toString('utf-8');\n  const baseContent = JSON.parse(baseContentText);\n\n  if (!baseContent || !baseContent.data) {\n    throw new Error('Invalid base content data');\n  }\n\n  // Parse the nested output field\n  const content = typeof baseContent.data.output === 'string' \n    ? JSON.parse(baseContent.data.output)\n    : baseContent.data.output;\n\n  // Build RAG enrichment prompt\n  const promptParts = [\n    'You are an expert in vector databases, semantic search, and RAG (Retrieval-Augmented Generation) systems.',\n    '',\n    'TASK: Add semantic metadata to the following educational content to optimize it for RAG retrieval in AXIS AI tutor.',\n    '',\n    'CONCEPT: ' + content.conceptName,\n    'DOMAIN: ' + content.domain,\n    '',\n    'BASE CONTENT:',\n    JSON.stringify(content.content, null, 2),\n    '',\n    'ADD THE FOLLOWING RAG METADATA:',\n    '',\n    '**1. Semantic Tags (for embedding similarity search):**',\n    '- Generate 7-10 semantic tags that capture core concepts',\n    '- Mix of technical terms, concepts, and natural language',\n    '- Examples: \"environment-management\", \"package-installation\", \"dependency-resolution\", \"conda-vs-pip\"',\n    '- Think: What would a student search for when they need this concept?',\n    '',\n    '**2. Question Keywords (for query matching):**',\n    '- Generate 15-20 natural language questions this concept answers',\n    '- Use beginner phrasing: \"How do I...\", \"What is...\", \"Why should...\", \"When to...\"',\n    '- Cover different question types: definition, procedure, comparison, troubleshooting',\n    '- Examples: \"How do I install Python libraries?\", \"What is the difference between conda and pip?\", \"Why won\\'t my package install?\"',\n    '',\n    '**3. Chunking Strategy (for retrieval granularity):**',\n    '- Identify 3-5 retrievable chunks within the content',\n    '- Each chunk: standalone concept that answers a specific question',\n    '- Provide: chunkId, chunkTitle, startContext, endContext',\n    '- Example chunks: \"Installing Anaconda Step-by-Step\", \"Understanding conda vs pip\", \"Common Installation Errors\"',\n    '',\n    '**4. AXIS Mode Adaptations (for persona-based retrieval):**',\n    '- **Coach Mode**: What would a coach retrieve to explain this? (e.g., \"step-by-step guide\", \"common mistakes\", \"encouragement\")',\n    '- **Hybrid Mode**: Balanced retrieval (e.g., \"explanation + exercise\", \"concept + debugging\")',\n    '- **Socratic Mode**: What questions would Socrates ask? (e.g., \"Why do you think...\", \"What would happen if...\", \"How is X different from Y?\")',\n    '',\n    '**5. Related Concepts (for graph traversal):**',\n    '- List 5-10 related concept IDs or names',\n    '- Include: prerequisites, unlocks, and semantically similar topics',\n    '- Examples: If concept is \"Installing Anaconda\", related: \"Why Anaconda?\", \"Understanding conda\", \"Creating Virtual Environments\", \"pip vs conda\"',\n    '',\n    '**6. Difficulty Layers (for progressive retrieval):**',\n    '- **Basic**: What a complete beginner needs (simplified explanations)',\n    '- **Intermediate**: Standard explanations (full concept)',\n    '- **Advanced**: Expert insights (edge cases, optimization, internals)',\n    '',\n    '**7. Common Error Patterns (for troubleshooting retrieval):**',\n    '- List 5-10 error messages or symptoms students encounter',\n    '- Use exact error text: \"ModuleNotFoundError: No module named \\'pandas\\'\", \"conda: command not found\"',\n    '- Map each error to relevant chunk in content',\n    '',\n    '**8. Code Pattern Signatures (for code retrieval):**',\n    '- Extract code patterns from examples: \"conda create --name\", \"conda activate\", \"conda install\"',\n    '- Include variations and common typos: \"conda create\", \"conda env create\"',\n    '',\n    'RETURN ONLY VALID JSON with this exact structure:',\n    '{',\n    '  \"conceptId\": \"' + content.conceptId + '\",',\n    '  \"conceptName\": \"' + content.conceptName + '\",',\n    '  \"domain\": \"' + content.domain + '\",',\n    '  \"subdomain\": \"' + content.subdomain + '\",',\n    '  \"layer\": ' + (content.layer || 1) + ',',\n    '  \"originalContent\": { ...original content object... },',\n    '  \"ragMetadata\": {',\n    '    \"semanticTags\": [\"string (7-10 tags)\"],',\n    '    \"questionKeywords\": [\"string (15-20 natural questions)\"],',\n    '    \"chunks\": [',\n    '      {',\n    '        \"chunkId\": \"string\",',\n    '        \"chunkTitle\": \"string\",',\n    '        \"startContext\": \"string (first few words)\",',\n    '        \"endContext\": \"string (last few words)\",',\n    '        \"semanticSummary\": \"string (1-2 sentences)\",',\n    '        \"questionsCovered\": [\"string (3-5 questions this chunk answers)\"]',\n    '      }',\n    '    ],',\n    '    \"axisAdaptations\": {',\n    '      \"coachMode\": {',\n    '        \"preferredChunks\": [\"chunkId array\"],',\n    '        \"retrievalPriority\": \"string (step-by-step/encouragement/examples)\",',\n    '        \"voiceTone\": \"string (supportive/explanatory)\"',\n    '      },',\n    '      \"hybridMode\": {',\n    '        \"preferredChunks\": [\"chunkId array\"],',\n    '        \"retrievalPriority\": \"string (balanced explanation+practice)\",',\n    '        \"voiceTone\": \"string (informative+interactive)\"',\n    '      },',\n    '      \"socraticMode\": {',\n    '        \"preferredChunks\": [\"chunkId array\"],',\n    '        \"retrievalPriority\": \"string (questions/comparisons/edge-cases)\",',\n    '        \"voiceTone\": \"string (questioning/exploratory)\",',\n    '        \"guidingQuestions\": [\"string (5-10 Socratic questions)\"]',\n    '      }',\n    '    },',\n    '    \"relatedConcepts\": [',\n    '      {',\n    '        \"conceptId\": \"string\",',\n    '        \"conceptName\": \"string\",',\n    '        \"relationship\": \"string (prerequisite/unlocks/similar/comparison)\"',\n    '      }',\n    '    ],',\n    '    \"difficultyLayers\": {',\n    '      \"basic\": {',\n    '        \"simplifiedExplanation\": \"string (ELI5 version)\",',\n    '        \"keyTakeaway\": \"string (one sentence)\",',\n    '        \"analogyOrMetaphor\": \"string\"',\n    '      },',\n    '      \"intermediate\": {',\n    '        \"fullExplanation\": \"string (standard version)\",',\n    '        \"practicalApplication\": \"string\"',\n    '      },',\n    '      \"advanced\": {',\n    '        \"edgeCases\": [\"string\"],',\n    '        \"performanceConsiderations\": \"string\",',\n    '        \"internals\": \"string (how it works under the hood)\"',\n    '      }',\n    '    },',\n    '    \"errorPatterns\": [',\n    '      {',\n    '        \"errorText\": \"string (exact error message)\",',\n    '        \"symptom\": \"string (what student sees)\",',\n    '        \"relevantChunk\": \"string (chunkId)\",',\n    '        \"quickFix\": \"string (1-2 sentence solution)\"',\n    '      }',\n    '    ],',\n    '    \"codePatterns\": [',\n    '      {',\n    '        \"pattern\": \"string (code signature)\",',\n    '        \"variations\": [\"string (common alternatives)\"],',\n    '        \"contextKeywords\": [\"string (when to retrieve this pattern)\"]',\n    '      }',\n    '    ]',\n    '  }',\n    '}',\n    '',\n    'IMPORTANT:',\n    '- Keep ALL original content intact in \"originalContent\" field',\n    '- ADD ragMetadata as new top-level field',\n    '- Semantic tags should be embedding-friendly (multi-word phrases)',\n    '- Question keywords should match natural student queries',\n    '- Chunks must be standalone (include enough context to understand alone)',\n    '- AXIS adaptations should guide retrieval strategy per mode',\n    '- Error patterns should use EXACT error text (for literal matching)',\n    '- Return ONLY JSON, no markdown, no code blocks',\n  ];\n\n  const prompt = promptParts.join('\\n');\n\n  return [{\n    json: {\n      prompt: prompt,\n      conceptId: conceptId,\n      conceptName: content.conceptName,\n      domain: content.domain,\n      subdomain: content.subdomain,\n      baseContent: content\n    }\n  }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1728,
+        64
+      ],
+      "id": "e6d8e3d5-61c2-443f-bb43-7ec1deaeee05",
+      "name": "Build RAG Enrichment Prompt"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"success\": true,\n  \"message\": \"RAG metadata added successfully\",\n  \"conceptId\": $json.conceptId,\n  \"conceptName\": $json.conceptName,\n  \"domain\": $json.domain,\n  \"subdomain\": $json.subdomain,\n  \"ragEnriched\": true,\n  \"filesCreated\": [\n    $json.conceptId + \"_rag.json\"\n  ],\n  \"generatedAt\": $json.jsonContent.generatedAt\n} }}",
+        "options": {}
+      },
+      "id": "8a5a28da-e74b-42b5-a8fe-c52f75312749",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "6612f93f-efa0-42f6-8ee1-2522b168d16c",
+      "name": "Update Progress Tracker",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        64
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.conceptId }}_rag.json",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "FOLDER_ID_FOR_RAG_ENRICHED",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "2e06f089-7c25-45d4-b7cc-349cfa3da283",
+      "name": "Save RAG-Enriched JSON to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -640,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "INPUT_BASE_CONTENT_FILE_ID",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "b656ca5b-30a3-4756-a79a-a3a3baecf482",
+      "name": "Read Base Content",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2032,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aethelgard-enrich-rag",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9ea93c70-565d-45ec-a442-790147c03607",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2256,
+        64
+      ],
+      "webhookId": "aethelgard-rag-enrichment"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -1520,
+        64
+      ],
+      "id": "ae061d06-f7b2-4ba4-877b-5118538d1f90",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1520,
+        416
+      ],
+      "id": "cd5b61e5-e5c9-45d1-9e65-0f7dfbf5e314",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ta7KXbvN8mf22jwT",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ensure proper JSON formatting\nconst aiOutput = $input.all()[0].json;\n\n// If the output is a string, parse it\nconst jsonData = typeof aiOutput === 'string' \n  ? JSON.parse(aiOutput) \n  : aiOutput;\n\n// Add enrichment metadata\njsonData.ragEnriched = true;\njsonData.enrichedAt = new Date().toISOString();\n\n// Return formatted JSON\nreturn [{\n  json: {\n    data: jsonData,\n    filename: `${jsonData.conceptId}_rag_${new Date().toISOString()}.json`\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1168,
+        64
+      ],
+      "id": "768c8d6f-fa60-4356-a06f-043c6434c458",
+      "name": "Format RAG JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jsonContent = JSON.stringify($input.all()[0].json, null, 2);\nconst buffer = Buffer.from(jsonContent, 'utf8');\n\nreturn [{\n  json: {},\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/json',\n      fileName: `rag_enriched_${Date.now()}.json`\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        64
+      ],
+      "id": "73061897-0b88-494b-9b6a-c3733157045f",
+      "name": "Convert to Binary"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Build RAG Enrichment Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Progress Tracker": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save RAG-Enriched JSON to Drive": {
+      "main": [
+        [
+          {
+            "node": "Update Progress Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Base Content": {
+      "main": [
+        [
+          {
+            "node": "Build RAG Enrichment Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Base Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Format RAG JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format RAG JSON": {
+      "main": [
+        [
+          {
+            "node": "Convert to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Binary": {
+      "main": [
+        [
+          {
+            "node": "Save RAG-Enriched JSON to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "rag-enrichment-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "RAGEnrichmentEngine",
+  "tags": []
+}

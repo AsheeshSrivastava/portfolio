@@ -1,0 +1,308 @@
+{
+  "name": "Aethelgard Layer 3 Story Mode Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "  // Access webhook data\n  let webhookData;\n  try {\n    webhookData = $('Webhook Trigger').first().json;\n  } catch (e) {\n    const allItems = $items();\n    webhookData = allItems.find(item => item.json.conceptId)?.json;\n  }\n\n  if (!webhookData || Object.keys(webhookData).length === 0) {\n    const inputs = $input.all();\n    for (const item of inputs) {\n      if (item.json.conceptId || item.json.body?.conceptId) {\n        webhookData = item.json;\n        break;\n      }\n    }\n  }\n\n  const conceptId = webhookData?.conceptId || webhookData?.body?.conceptId;\n\n  if (!conceptId) {\n    throw new Error('conceptId is missing');\n  }\n\n  // Get Layer 2 content from binary data\n  const layer2Binary = await this.helpers.getBinaryDataBuffer(0, 'data');\n  const layer2Text = layer2Binary.toString('utf-8');\n  const layer2Content = JSON.parse(layer2Text);\n\n  if (!layer2Content || !layer2Content.data) {\n    throw new Error('Invalid Layer 2 content data');\n  }\n\n  // Parse the nested output field\n  const baseContent = typeof layer2Content.data.output === 'string' \n    ? JSON.parse(layer2Content.data.output)\n    : layer2Content.data.output;\n\n  // Build Layer 3 story transformation prompt\n  const promptParts = [\n    'You are a master storyteller and game narrative designer for Aethelgard Academy - an interactive learning RPG.',\n    '',\n    'TASK: Transform educational content into narrative-driven story mode using Aethelgard universe lore.',\n    '',\n    'CONCEPT: ' + baseContent.conceptName,\n    'DOMAIN: ' + baseContent.domain,\n    '',\n    'LAYER 2 CONTENT (Adult Learning Optimized):',\n    JSON.stringify(baseContent.content, null, 2),\n    '',\n    '=== AETHELGARD UNIVERSE LORE ===',\n    '',\n    '**The World:**',\n    '- Aethelgard: A mystical academy where code is magic and syntax is spellcraft',\n    '- Students are \"Code Mages\" learning to harness the power of Python',\n    '- Each programming concept is a magical discipline',\n    '- The academy is divided into guilds (domains): Environment Artificers, Data Weavers, Logic Architects, etc.',\n    '',\n    '**Key Characters:**',\n    '- **Master Conda** (Environment Artificer Guild Leader): Wise elder who teaches environment management. Patient, methodical, loves analogies about organization.',\n    '- **Professor Pythia** (Data Weaver Guild): Mysterious oracle who speaks in patterns and metaphors. Teaches data manipulation.',\n    '- **Sergeant Syntax** (Logic Architect): Strict but fair. Teaches control flow and logic. Military precision.',\n    '- **Alchemist Ada** (Error Handler): Eccentric inventor who turns mistakes into learning. Teaches debugging.',\n    '- **The Librarian** (Documentation Keeper): Ancient being who knows all Python knowledge. Guides research.',\n    '',\n    '**Narrative Framework:**',\n    '1. **Quest Opening**: Student receives quest from relevant character',\n    '2. **Story Problem**: Translate technical problem into narrative challenge',\n    '3. **Guided Learning Journey**: Character mentors student through concept',\n    '4. **Practical Spellcasting**: Code examples framed as casting spells/rituals',\n    '5. **Trials**: Exercises become challenges/tests',\n    '6. **Quest Completion**: Student gains new power/title',\n    '',\n    'TRANSFORMATION RULES:',\n    '',\n    '**1. Problem → Quest Hook:**',\n    '- Career context becomes \"guild mission\" or \"academy challenge\"',\n    '- Real-world stakes become \"what happens if the spell fails\"',\n    '- Immediate applicability becomes \"your first guild task\"',\n    '',\n    '**Example:**',\n    'Before (Layer 2): \"As a junior developer, you\\'ll need to manage multiple Python environments for different projects...\"',\n    'After (Layer 3): \"Young apprentice, Master Conda summons you. The guild faces chaos—each project requires different magical ingredients (packages), and mixing them causes disasters. You must learn the ancient art of Environment Separation...\"',\n    '',\n    '**2. System Explanation → Mentored Journey:**',\n    '- Mental models become \"understanding the magic system\"',\n    '- Decision frameworks become \"choosing your spellcasting approach\"',\n    '- Professional patterns become \"how master mages work\"',\n    '- Reflection prompts become character dialogue',\n    '',\n    '**Example:**',\n    'Before (Layer 2): \"Conda is both a package manager and environment manager. Think of it as...\"',\n    'After (Layer 3): \"Master Conda strokes his beard. \\'My dear apprentice, I wield two powers: I summon tools from the Great Repository, AND I create isolated sanctuaries where your projects can thrive independently. Let me show you...\\'\"',\n    '',\n    '**3. Code Examples → Spell Incantations:**',\n    '- Commands become \"incantations\" or \"spell components\"',\n    '- Output becomes \"manifestation\" or \"spell effect\"',\n    '- Comments explain \"what this part of the spell does\"',\n    '- Reflection prompts become \"Master asks: What would happen if...?\"',\n    '',\n    '**Example:**',\n    'Before (Layer 2): \"conda create --name my_project python=3.9\"',\n    'After (Layer 3): \"Master Conda teaches you the Sanctuary Creation Spell: `conda create --name my_project python=3.9`. As you speak these words, magical energy swirls, carving out a protected space in the Anaconda Realm...\"',\n    '',\n    '**4. Exercises → Trials/Challenges:**',\n    '- Professional scenarios become \"guild missions\"',\n    '- Debugging becomes \"dispelling dark magic\" or \"healing corrupted spells\"',\n    '- Code review becomes \"peer mage assessment\"',\n    '',\n    '**5. Win Section → Quest Completion:**',\n    '- Competency markers become \"signs of mastery\"',\n    '- Portfolio projects become \"guild contributions\"',\n    '- Interview readiness becomes \"proving yourself to other guilds\"',\n    '- Confidence builder becomes character encouragement',\n    '',\n    'RETURN ONLY VALID JSON with this exact structure:',\n    '{',\n    '  \"conceptId\": \"string\",',\n    '  \"conceptName\": \"string\",',\n    '  \"domain\": \"string\",',\n    '  \"subdomain\": \"string\",',\n    '  \"estimatedMinutes\": number,',\n    '  \"layer\": 3,',\n    '  \"content\": {',\n    '    \"questHook\": {',\n    '      \"title\": \"string (narrative quest name)\",',\n    '      \"character\": \"string (who gives the quest)\",',\n    '      \"characterDialogue\": \"string (150-200 words, character speaking)\",',\n    '      \"storyProblem\": \"string (narrative challenge)\",',\n    '      \"personalStakes\": \"string (why student should care - narrative form)\",',\n    '      \"firstMission\": \"string (immediate task in story terms)\"',\n    '    },',\n    '    \"guidedJourney\": {',\n    '      \"title\": \"string\",',\n    '      \"magicSystemExplanation\": \"string (how this concept works - narrative metaphor)\",',\n    '      \"mentorGuidance\": \"string (700-900 words, character teaching)\",',\n    '      \"masterTechniques\": [\"string (3-5 expert patterns in story form)\"],',\n    '      \"spellcasting\": [',\n    '        {',\n    '          \"spellName\": \"string (narrative name for code example)\",',\n    '          \"incantation\": \"string (the actual code)\",',\n    '          \"spellExplanation\": \"string (what it does - narrative)\",',\n    '          \"manifestation\": \"string (output/result - narrative)\",',\n    '          \"masterAsks\": \"string (reflection question in character voice)\"',\n    '        }',\n    '      ],',\n    '      \"commonCurses\": [\"string (common mistakes - narrative form)\"],',\n    '      \"protectiveRunes\": [\"string (best practices - narrative form)\"],',\n    '      \"dispellingDarkMagic\": [\"string (debugging/recovery - narrative)\"]',\n    '    },',\n    '    \"trials\": [',\n    '      {',\n    '        \"trialName\": \"string (guild challenge name)\",',\n    '        \"scenario\": \"string (mission context - narrative)\",',\n    '        \"challenge\": \"string (what they must do)\",',\n    '        \"guidance\": \"string (hints in character voice)\",',\n    '        \"expectedSolution\": \"string\",',\n    '        \"masterFeedback\": \"string (explanation in character voice)\"',\n    '      }',\n    '    ],',\n    '    \"questCompletion\": {',\n    '      \"title\": \"string\",',\n    '      \"characterCelebration\": \"string (character praising student - 100 words)\",',\n    '      \"newPowersUnlocked\": [\"string (what student can now do)\"],',\n    '      \"guildContributions\": [\"string (portfolio projects - narrative)\"],',\n    '      \"titleEarned\": \"string (e.g., Apprentice Environment Mage)\",',\n    '      \"nextQuestTeaser\": \"string (what comes next)\"',\n    '    },',\n    '    \"metadata\": {',\n    '      \"characterAppearances\": [\"string (which characters appear)\"],',\n    '      \"guildAffiliation\": \"string\",',\n    '      \"magicDiscipline\": \"string\",',\n    '      \"prerequisiteQuests\": [\"array\"],',\n    '      \"unlocksQuests\": [\"array\"],',\n    '      \"learningObjectives\": [\"array (same as Layer 2)\"]',\n    '    }',\n  }',\n '}',\n    '',\n    'NARRATIVE GUIDELINES:',\n    '- **Voice**: Fantasy RPG with humor and warmth (think: Terry Pratchett meets coding bootcamp)',\n    '- **Tone**: Encouraging but not patronizing; magical but grounded in real learning',\n    '- **Character consistency**: Master Conda always uses organization metaphors, Pythia speaks in patterns, etc.',\n    '- **Educational integrity**: Story enhances learning, never obscures it. Technical accuracy is sacred.',\n    '- **Inclusive language**: \"Apprentice\", \"mage\", \"student\" (gender-neutral)',\n    '- **Balance**: 60% narrative immersion, 40% direct technical instruction',\n    '',\n    'CHARACTER VOICE EXAMPLES:',\n    '- **Master Conda**: \"Ah, my young apprentice! You see, chaos is simply order waiting to be discovered. Let me show you how to organize your magical ingredients...\"',\n    '- **Professor Pythia**: \"The patterns reveal themselves to those who look. [pause] Tell me, what do you see in this data? What story does it whisper?\"',\n    '- **Sergeant Syntax**: \"Listen up, recruit! In my guild, we don\\'t guess—we execute with PRECISION. If your condition says True, it better BE True!\"',\n    '- **Alchemist Ada**: \"Oh, SPLENDID! You broke it! [cackles] Now we can REALLY learn something. Errors are just experiments teaching us their secrets...\"',\n    '',\n    'IMPORTANT:',\n    '- Preserve ALL technical content from Layer 2 (translate, don\\'t remove)',\n    '- Every code example must be framed as \"spellcasting\" but remain technically accurate',\n    '- Character dialogue should feel natural, not forced',\n    '- Story elements should ENHANCE memory retention, not distract',\n    '- Return ONLY JSON, no markdown, no code blocks',\n  ];\n\n  const prompt = promptParts.join('\\n');\n\n  return [{\n    json: {\n      prompt: prompt,\n      conceptId: conceptId,\n      conceptName: baseContent.conceptName,\n      domain: baseContent.domain,\n      subdomain: baseContent.subdomain,\n      layer2Content: baseContent\n    }\n  }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1728,
+        64
+      ],
+      "id": "e6d8e3d5-61c2-443f-bb43-7ec1deaeee06",
+      "name": "Build Story Mode Prompt"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"success\": true,\n  \"message\": \"Story mode content generated successfully\",\n  \"conceptId\": $json.conceptId,\n  \"conceptName\": $json.conceptName,\n  \"domain\": $json.domain,\n  \"subdomain\": $json.subdomain,\n  \"layer\": 3,\n  \"filesCreated\": [\n    $json.conceptId + \"_layer3_story.json\"\n  ],\n  \"generatedAt\": $json.jsonContent.generatedAt\n} }}",
+        "options": {}
+      },
+      "id": "8a5a28da-e74b-42b5-a8fe-c52f75312750",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "6612f93f-efa0-42f6-8ee1-2522b168d16d",
+      "name": "Update Progress Tracker",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        64
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.conceptId }}_layer3_story.json",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "FOLDER_ID_FOR_LAYER3",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "2e06f089-7c25-45d4-b7cc-349cfa3da284",
+      "name": "Save Layer 3 Story to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -640,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "INPUT_LAYER2_FILE_ID",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "b656ca5b-30a3-4756-a79a-a3a3baecf483",
+      "name": "Read Layer 2 Content",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2032,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aethelgard-generate-layer3",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9ea93c70-565d-45ec-a442-790147c03608",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2256,
+        64
+      ],
+      "webhookId": "aethelgard-layer3-story"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -1520,
+        64
+      ],
+      "id": "ae061d06-f7b2-4ba4-877b-5118538d1f91",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1520,
+        416
+      ],
+      "id": "cd5b61e5-e5c9-45d1-9e65-0f7dfbf5e315",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ta7KXbvN8mf22jwT",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ensure proper JSON formatting\nconst aiOutput = $input.all()[0].json;\n\n// If the output is a string, parse it\nconst jsonData = typeof aiOutput === 'string' \n  ? JSON.parse(aiOutput) \n  : aiOutput;\n\n// Add story mode metadata\njsonData.layer = 3;\njsonData.storyMode = true;\njsonData.generatedAt = new Date().toISOString();\njsonData.narrativeStyle = 'aethelgard-rpg';\n\n// Return formatted JSON\nreturn [{\n  json: {\n    data: jsonData,\n    filename: `${jsonData.conceptId}_layer3_story_${new Date().toISOString()}.json`\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1168,
+        64
+      ],
+      "id": "768c8d6f-fa60-4356-a06f-043c6434c459",
+      "name": "Format Story JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jsonContent = JSON.stringify($input.all()[0].json, null, 2);\nconst buffer = Buffer.from(jsonContent, 'utf8');\n\nreturn [{\n  json: {},\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/json',\n      fileName: `layer3_story_${Date.now()}.json`\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        64
+      ],
+      "id": "73061897-0b88-494b-9b6a-c3733157045g",
+      "name": "Convert to Binary"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Build Story Mode Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Progress Tracker": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Layer 3 Story to Drive": {
+      "main": [
+        [
+          {
+            "node": "Update Progress Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Layer 2 Content": {
+      "main": [
+        [
+          {
+            "node": "Build Story Mode Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Layer 2 Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Story JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Story JSON": {
+      "main": [
+        [
+          {
+            "node": "Convert to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Binary": {
+      "main": [
+        [
+          {
+            "node": "Save Layer 3 Story to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "layer3-story-mode-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "Layer3StoryMode",
+  "tags": []
+}

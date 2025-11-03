@@ -1,0 +1,277 @@
+{
+  "name": "Aethelgard Layer 1 - Quality Focused",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aethelgard-generate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2800,
+        300
+      ],
+      "webhookId": "aethelgard-content-generator"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "read-curriculum",
+      "name": "Read Curriculum",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2600,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get webhook data\nconst webhookData = $('Webhook Trigger').first().json;\nconst conceptId = webhookData.conceptId || webhookData.body?.conceptId;\n\nif (!conceptId) {\n  throw new Error('conceptId is missing from webhook');\n}\n\n// Get curriculum\nconst curriculumBinary = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst curriculumText = curriculumBinary.toString('utf-8');\nconst curriculum = JSON.parse(curriculumText);\n\nif (!curriculum || !curriculum.domains) {\n  throw new Error('Invalid curriculum - missing domains');\n}\n\n// Find concept in curriculum\nconst allConcepts = [];\ncurriculum.domains.forEach(d => {\n  d.subdomains.forEach(s => {\n    s.concepts.forEach(c => {\n      allConcepts.push({\n        ...c,\n        domain: d.name,\n        subdomain: s.name\n      });\n    });\n  });\n});\n\nconst concept = allConcepts.find(c => c.id === conceptId);\n\nif (!concept) {\n  throw new Error('Concept ' + conceptId + ' not found in curriculum');\n}\n\n// Get prerequisites names\nconst prerequisites = concept.prerequisites.map(preReqId => {\n  const prereq = allConcepts.find(c => c.id === preReqId);\n  return prereq ? prereq.name : preReqId;\n});\n\n// Get what this unlocks\nconst unlocks = allConcepts.filter(c => c.prerequisites.includes(conceptId)).map(c => c.name);\n\n// Build rich prompt with ALL curriculum context\nconst prompt = `You are an expert Python educator creating content for absolute beginners.\n\nCONCEPT DETAILS:\n- ID: ${concept.id}\n- Name: ${concept.name}\n- Domain: ${concept.domain}\n- Subdomain: ${concept.subdomain}\n- Estimated Time: ${concept.estimatedMinutes} minutes\n\nLEARNING OBJECTIVES:\n${concept.learningObjectives.map((obj, i) => `${i + 1}. ${obj}`).join('\\n')}\n\nPREREQUISITES: ${prerequisites.length > 0 ? prerequisites.join(', ') : 'None (beginner-friendly)'}\nUNLOCKS: ${unlocks.length > 0 ? unlocks.join(', ') : 'Foundation concept'}\n\nYOUR TASK:\nCreate comprehensive educational content using the PSW (Problem-System-Win) framework.\n\nRETURN STRUCTURE (JSON only, no markdown, no code blocks):\n{\n  \"conceptId\": \"${concept.id}\",\n  \"conceptName\": \"${concept.name}\",\n  \"domain\": \"${concept.domain}\",\n  \"subdomain\": \"${concept.subdomain}\",\n  \"estimatedMinutes\": ${concept.estimatedMinutes},\n  \"layer\": 1,\n  \"content\": {\n    \"problem\": {\n      \"title\": \"[Engaging title]\",\n      \"scenario\": \"[100-150 word scenario that beginners relate to]\",\n      \"painPoint\": \"[What frustration does this solve?]\",\n      \"motivation\": \"[Why should they care?]\"\n    },\n    \"system\": {\n      \"title\": \"[Clear explanation title]\",\n      \"explanation\": \"[500-700 word clear explanation for beginners]\",\n      \"subConcepts\": [\"[key concept 1]\", \"[key concept 2]\", ...],\n      \"codeExamples\": [\n        {\n          \"title\": \"[Example title]\",\n          \"code\": \"[Python code with helpful comments]\",\n          \"explanation\": \"[What this code does and why]\",\n          \"output\": \"[Expected output]\"\n        }\n      ],\n      \"commonMistakes\": [\"[mistake 1]\", \"[mistake 2]\", ...],\n      \"bestPractices\": [\"[practice 1]\", \"[practice 2]\", ...]\n    },\n    \"win\": {\n      \"title\": \"[Achievement title]\",\n      \"applications\": [\"[real use case 1]\", \"[real use case 2]\", ...],\n      \"nextSteps\": \"[What to learn next]\",\n      \"confidenceBuilder\": \"[Encouraging message]\"\n    }\n  },\n  \"exercises\": [\n    {\n      \"type\": \"knowledge-check\",\n      \"question\": \"[Question]\",\n      \"options\": [\"A\", \"B\", \"C\", \"D\"],\n      \"correct\": \"[letter]\",\n      \"explanation\": \"[Why this is correct]\"\n    },\n    {\n      \"type\": \"code-writing\",\n      \"prompt\": \"[What to build]\",\n      \"starterCode\": \"[Starter code]\",\n      \"solution\": \"[Complete solution]\",\n      \"hints\": [\"hint1\", \"hint2\"]\n    },\n    {\n      \"type\": \"debugging\",\n      \"brokenCode\": \"[Code with bug]\",\n      \"problem\": \"[What's wrong]\",\n      \"solution\": \"[Fixed code]\",\n      \"explanation\": \"[Why it was broken]\"\n    }\n  ],\n  \"metadata\": {\n    \"prerequisites\": ${JSON.stringify(prerequisites)},\n    \"unlocks\": ${JSON.stringify(unlocks)},\n    \"libraries\": [],\n    \"learningObjectives\": ${JSON.stringify(concept.learningObjectives)}\n  }\n}\n\nQUALITY GUIDELINES:\n✓ Write for COMPLETE beginners\n✓ Use clear, simple language\n✓ Be encouraging and supportive\n✓ Include 2-3 code examples\n✓ Make exercises practical and useful\n✓ Return ONLY valid JSON (no markdown, no code blocks)`;\n\nreturn [{\n  json: {\n    prompt: prompt,\n    conceptId: concept.id,\n    conceptName: concept.name,\n    domain: concept.domain,\n    subdomain: concept.subdomain\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2400,
+        300
+      ],
+      "id": "build-rich-prompt",
+      "name": "Build Rich Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {},
+        "model": {
+          "__rl": true,
+          "value": "gemini-model",
+          "mode": "id",
+          "cachedResultName": "Google Gemini Chat Model"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -2200,
+        300
+      ],
+      "id": "gemini-generation",
+      "name": "Generate Content with Gemini"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -2200,
+        500
+      ],
+      "id": "gemini-model",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ta7KXbvN8mf22jwT",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and validate Gemini output\nconst aiOutput = $input.all()[0].json;\n\nlet contentData;\ntry {\n  contentData = typeof aiOutput === 'string' ? JSON.parse(aiOutput) : aiOutput;\n} catch (e) {\n  throw new Error('Gemini returned invalid JSON: ' + e.message);\n}\n\n// Add generation metadata\ncontentData.generatedAt = new Date().toISOString();\ncontentData.generatedBy = 'Gemini AI';\n\nreturn [{ json: contentData }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2000,
+        300
+      ],
+      "id": "parse-output",
+      "name": "Parse Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert to binary for Google Drive upload\nconst jsonContent = JSON.stringify($input.all()[0].json, null, 2);\nconst buffer = Buffer.from(jsonContent, 'utf8');\n\nreturn [{\n  json: $input.all()[0].json,\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/json',\n      fileName: `${$input.all()[0].json.conceptId}.json`\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1800,
+        300
+      ],
+      "id": "prepare-file",
+      "name": "Prepare for Drive"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.conceptId }}.json",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1YOw-1Cx61CL23UGm9jxFtn70XUON-OjN",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "save-to-drive",
+      "name": "Save to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1600,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"success\": true,\n  \"message\": \"High-quality content generated\",\n  \"conceptId\": $json.conceptId,\n  \"conceptName\": $json.conceptName,\n  \"domain\": $json.domain,\n  \"subdomain\": $json.subdomain,\n  \"generatedAt\": $json.generatedAt,\n  \"wordCount\": JSON.stringify($json.content).length\n} }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -1400,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Curriculum",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Curriculum": {
+      "main": [
+        [
+          {
+            "node": "Build Rich Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Rich Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Content with Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Content with Gemini": {
+      "main": [
+        [
+          {
+            "node": "Parse Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Content with Gemini",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Output": {
+      "main": [
+        [
+          {
+            "node": "Prepare for Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Drive": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "layer1-quality-focused",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "Layer1QualityFocused",
+  "tags": []
+}

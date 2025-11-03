@@ -1,0 +1,348 @@
+{
+  "name": "Aethelgard Layer 1 Content Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "  // Access webhook data\n  let webhookData;\n  try {\n    webhookData = $('Webhook Trigger').first().json;\n  } catch (e) {\n    const allItems = $items();\n    webhookData = allItems.find(item => item.json.conceptId)?.json;\n  }\n\n  if (!webhookData || Object.keys(webhookData).length === 0) {\n    const inputs = $input.all();\n    for (const item of inputs) {\n      if (item.json.conceptId || item.json.body?.conceptId) {\n        webhookData = item.json;\n        break;\n      }\n    }\n  }\n\n  const conceptId = webhookData?.conceptId || webhookData?.body?.conceptId;\n  const conceptName = webhookData?.conceptName || webhookData?.body?.conceptName;\n  const domain = webhookData?.domain || webhookData?.body?.domain;\n  const subdomain = webhookData?.subdomain || webhookData?.body?.subdomain;\n\n  if (!conceptId) {\n    throw new Error('conceptId is missing');\n  }\n\n  // Get curriculum\n  const curriculumBinary = await this.helpers.getBinaryDataBuffer(0, 'data');\n  const curriculumText = curriculumBinary.toString('utf-8');\n  const curriculum = JSON.parse(curriculumText);\n\n  if (!curriculum || !curriculum.domains) {\n    throw new Error('Invalid curriculum data');\n  }\n\n  // Find concept\n  const allConcepts = [];\n  curriculum.domains.forEach(d => {\n    d.subdomains.forEach(s => {\n      s.concepts.forEach(c => {\n        allConcepts.push({\n          ...c,\n          domain: d.name,\n          domainId: d.id,\n          subdomain: s.name,\n          subdomainId: s.id\n        });\n      });\n    });\n  });\n\n  const currentConcept = allConcepts.find(c => c.id === conceptId);\n\n  if (!currentConcept) {\n    throw new Error('Concept not found: ' + conceptId);\n  }\n\n  const prerequisites = currentConcept.prerequisites.map(preReqId => {\n    const prereq = allConcepts.find(c => c.id === preReqId);\n    return prereq ? prereq.name : preReqId;\n  });\n\n  const unlocks = allConcepts.filter(c => c.prerequisites.includes(conceptId)).map(c => c.name);\n\n  // Build prompt\n  const promptParts = [\n    'You are an expert Python educator. Create educational content for absolute beginners.',\n    '',\n    'CONCEPT: ' + currentConcept.name,\n    'ID: ' + currentConcept.id,\n    'Domain: ' + currentConcept.domain,\n    'Time: ' + currentConcept.estimatedMinutes + ' minutes',\n    '',\n    'OBJECTIVES:',\n    currentConcept.learningObjectives.map((obj, i) => (i + 1) + '. ' + obj).join('\\n'),\n    '',\n    'PREREQUISITES: ' + (prerequisites.length > 0 ? prerequisites.join(', ') : 'None'),\n    'UNLOCKS: ' + (unlocks.length > 0 ? unlocks.join(', ') : 'None'),\n    '',\n    'Return ONLY valid JSON with this structure:',\n    '- conceptId, conceptName, domain, subdomain, estimatedMinutes, layer (set to 1)',\n    '- content object with problem, system, and win sections (PSW framework)',\n    '- problem: title, scenario (100-150 words), painPoint, motivation',\n    '- system: title, explanation (500-700 words), subConcepts array, codeExamples array, commonMistakes array, bestPractices array',\n    '- win: title, applications array, nextSteps, confidenceBuilder',\n    '- exercises array with 3 items: knowledge-check, code-writing, debugging',\n    '- metadata: prerequisites, unlocks, libraries, learningObjectives',\n    '',\n    'Code examples must have: title, code (with comments), explanation, output',\n    'Write for complete beginners. Use clear language. Be encouraging.',\n    'Return ONLY JSON. No markdown. No code blocks. Just pure JSON.'\n  ];\n\n  const prompt = promptParts.join('\\n');\n\n  return [{\n    json: {\n      prompt: prompt,\n      conceptId: conceptId,\n      conceptName: currentConcept.name,\n      domain: currentConcept.domain,\n      subdomain: currentConcept.subdomain,\n      estimatedMinutes: currentConcept.estimatedMinutes\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1728,
+        64
+      ],
+      "id": "e6d8e3d5-61c2-443f-bb43-7ec1deaeee04",
+      "name": "Build Gemini Prompt1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"success\": true,\n  \"message\": \"Content generated successfully\",\n  \"conceptId\": $json.conceptId,\n  \"conceptName\": $json.conceptName,\n  \"domain\": $json.domain,\n  \"subdomain\": $json.subdomain,\n  \"filesCreated\": [\n    $json.conceptId + \".json\",\n    $json.conceptId + \".md\"\n  ],\n  \"generatedAt\": $json.jsonContent.generatedAt\n} }}",
+        "options": {}
+      },
+      "id": "8a5a28da-e74b-42b5-a8fe-c52f75312748",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "6612f93f-efa0-42f6-8ee1-2522b168d16b",
+      "name": "Update Progress Tracker",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        64
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.conceptId }}.json",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1YOw-1Cx61CL23UGm9jxFtn70XUON-OjN",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "2e06f089-7c25-45d4-b7cc-349cfa3da282",
+      "name": "Save JSON to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -640,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "b656ca5b-30a3-4756-a79a-a3a3baecf481",
+      "name": "Read Completed Concepts",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2032,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1e-rI0IPdAbzFVrre_QhdgDjiS3h1h1yj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "daa70944-e984-431b-bea4-e2ffce03a024",
+      "name": "Read Curriculum Context",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2256,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aethelgard-generate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9ea93c70-565d-45ec-a442-790147c03606",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2480,
+        64
+      ],
+      "webhookId": "aethelgard-content-generator"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -1520,
+        64
+      ],
+      "id": "ae061d06-f7b2-4ba4-877b-5118538d1f8f",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1520,
+        416
+      ],
+      "id": "cd5b61e5-e5c9-45d1-9e65-0f7dfbf5e313",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ta7KXbvN8mf22jwT",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ensure proper JSON formatting\nconst aiOutput = $input.all()[0].json;\n\n// If the output is a string, parse it\nconst jsonData = typeof aiOutput === 'string' \n  ? JSON.parse(aiOutput) \n  : aiOutput;\n\n// Return formatted JSON\nreturn [{\n  json: {\n    data: jsonData,\n    filename: `ai_output_${new Date().toISOString()}.json`\n  }\n}];\n```\n\n## Step 3: Add Google Drive Node\n1. Add a **Google Drive** node after your AI Agent (or Code node)\n2. Configure it as follows:\n\n### Node Configuration:\n- **Resource**: File\n- **Operation**: Upload\n- **Binary Data**: Toggle OFF (since we're uploading text/JSON)\n\n### File Upload Settings:\n- **File Name**: \n```\n  {{ $json.filename || 'ai_output.json' }}\n```\n  \n- **File Content**: Click on \"Add Expression\" and use:\n```\n  {{ JSON.stringify($json, null, 2) }}\n```\n  Or if you're pulling directly from AI Agent:\n```\n  {{ JSON.stringify($input.all()[0].json, null, 2) }}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1168,
+        64
+      ],
+      "id": "768c8d6f-fa60-4356-a06f-043c6434c457",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jsonContent = JSON.stringify($input.all()[0].json, null, 2);\nconst buffer = Buffer.from(jsonContent, 'utf8');\n\nreturn [{\n  json: {},\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/json',\n      fileName: `ai_output_${Date.now()}.json`\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        64
+      ],
+      "id": "73061897-0b88-494b-9b6a-c3733157045e",
+      "name": "Code in JavaScript2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Build Gemini Prompt1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Progress Tracker": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save JSON to Drive": {
+      "main": [
+        [
+          {
+            "node": "Update Progress Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Completed Concepts": {
+      "main": [
+        [
+          {
+            "node": "Build Gemini Prompt1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Curriculum Context": {
+      "main": [
+        [
+          {
+            "node": "Read Completed Concepts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Curriculum Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Save JSON to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2ba162c4-02b9-4a2e-ac6f-016dcc3eab5a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "KTUbCZ6dkoATN5SZ",
+  "tags": []
+}

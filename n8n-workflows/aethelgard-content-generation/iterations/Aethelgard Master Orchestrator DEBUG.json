@@ -1,0 +1,166 @@
+{
+  "name": "Aethelgard Master Orchestrator DEBUG",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aethelgard-orchestrator-debug",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-orchestrator",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2800,
+        300
+      ],
+      "webhookId": "aethelgard-orchestrator-debug"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1e-rI0IPdAbzFVrre_QhdgDjiS3h1h1yj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "read-file1",
+      "name": "Read File 1 (1e-rI0...)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2600,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "read-file2",
+      "name": "Read File 2 (1nyKt...)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2400,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read File 1 (1e-rI0...)\nconst file1Data = $('Read File 1 (1e-rI0...)').first().binary.data.data;\nconst file1Buffer = Buffer.from(file1Data, 'base64');\nconst file1Text = file1Buffer.toString('utf-8');\nconst file1Json = JSON.parse(file1Text);\n\n// Read File 2 (1nyKt...)\nconst file2Data = $('Read File 2 (1nyKt...)').first().binary.data.data;\nconst file2Buffer = Buffer.from(file2Data, 'base64');\nconst file2Text = file2Buffer.toString('utf-8');\nconst file2Json = JSON.parse(file2Text);\n\nreturn [{\n  json: {\n    file1_id: '1e-rI0IPdAbzFVrre_QhdgDjiS3h1h1yj',\n    file1_keys: Object.keys(file1Json),\n    file1_has_domains: !!file1Json.domains,\n    file1_has_completed: !!file1Json.completed,\n    file1_has_layer1: !!file1Json.layer1,\n    \n    file2_id: '1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj',\n    file2_keys: Object.keys(file2Json),\n    file2_has_domains: !!file2Json.domains,\n    file2_has_completed: !!file2Json.completed,\n    file2_has_layer1: !!file2Json.layer1,\n    \n    DIAGNOSIS: file1Json.domains ? 'File 1 is CURRICULUM' : (file1Json.layer1 ? 'File 1 is PROGRESS' : 'File 1 is UNKNOWN'),\n    DIAGNOSIS2: file2Json.domains ? 'File 2 is CURRICULUM' : (file2Json.layer1 ? 'File 2 is PROGRESS' : 'File 2 is UNKNOWN')\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2200,
+        300
+      ],
+      "id": "debug-files",
+      "name": "Debug: Show File Contents"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -2000,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read File 1 (1e-rI0...)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read File 1 (1e-rI0...)": {
+      "main": [
+        [
+          {
+            "node": "Read File 2 (1nyKt...)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read File 2 (1nyKt...)": {
+      "main": [
+        [
+          {
+            "node": "Debug: Show File Contents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug: Show File Contents": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "orchestrator-debug",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "AethelgardOrchestratorDebug",
+  "tags": []
+}
