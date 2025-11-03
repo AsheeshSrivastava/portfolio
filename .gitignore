@@ -1,0 +1,62 @@
+# Portfolio - Public Repo
+# Only include finished, polished work
+
+# ============================================
+# CREDENTIALS & SECRETS (NEVER COMMIT!)
+# ============================================
+.env
+.env.local
+.env.*.local
+credentials.json
+secrets.json
+config.local.json
+*.pem
+*.key
+*.cert
+
+# ============================================
+# DEPENDENCIES
+# ============================================
+node_modules/
+venv/
+env/
+.venv/
+__pycache__/
+*.egg-info/
+dist/
+build/
+
+# ============================================
+# BUILD ARTIFACTS
+# ============================================
+*.pyc
+*.pyo
+*.log
+*.swp
+*.swo
+*~
+.cache/
+tmp/
+temp/
+
+# ============================================
+# OS-SPECIFIC
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# IDE
+# ============================================
+.vscode/
+.idea/
+*.sublime-workspace
+
+# ============================================
+# DRAFTS & WIP (Optional)
+# ============================================
+# Uncomment to exclude work-in-progress:
+# drafts/
+# wip/
+# _private/
