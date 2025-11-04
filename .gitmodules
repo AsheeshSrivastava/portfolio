@@ -20,3 +20,6 @@
 	path = projects/aethelgard-saga
 	url = https://github.com/AsheeshSrivastava/Aethelgard_Saga.git
 	branch = ai-enhancements
+[submodule "apps/question-forge"]
+	path = apps/question-forge
+	url = https://github.com/AsheeshSrivastava/question-forge.git

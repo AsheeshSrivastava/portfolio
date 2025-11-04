@@ -84,6 +84,23 @@
 
 ---
 
+#### 7. [QuestionForge](https://github.com/AsheeshSrivastava/question-forge)
+**Professional Question Quality Assessment & Refinement Tool**
+
+- **Tech Stack:** Python, Gradio, Rich CLI, YAML
+- **Features:**
+  - 7-criteria quality analysis (CMU, AWS, ISO standards)
+  - Adult Learning Principles & People-First Language scoring
+  - Bloom's Taxonomy alignment validation
+  - RAG optimization for AI/LLM systems
+  - JSONL format support for question banks
+  - Batch processing & detailed reporting
+- **Live Demo:** [huggingface.co/spaces/asheeshsrivastava9/Qnc-QuestionForger](https://huggingface.co/spaces/asheeshsrivastava9/Qnc-QuestionForger)
+- **Documentation:** 20,000+ words across 10+ comprehensive guides
+- **Status:** ✅ Phase 1 Live (Analysis) | 🛠️ Phase 2 In Progress (Refinement)
+
+---
+
 ## 🎓 Projects
 
 ### [Aethelgard Academy (Aethelgard Saga)](https://github.com/AsheeshSrivastava/Aethelgard_Saga)
@@ -185,13 +202,13 @@
 
 ## 📊 Project Statistics
 
-- **Total Applications:** 6 (5 deployed, 1 in development)
+- **Total Applications:** 7 (6 deployed, 1 in development)
 - **Major Projects:** 1 (Aethelgard Academy)
 - **Automation Workflows:** 4 (n8n)
-- **Lines of Code:** 50,000+ across all projects
-- **Documentation:** 15,000+ lines across projects
-- **Deployed Apps:** 5 live applications
-- **GitHub Repositories:** 7 independent repos
+- **Lines of Code:** 53,000+ across all projects
+- **Documentation:** 35,000+ words across projects
+- **Deployed Apps:** 6 live applications
+- **GitHub Repositories:** 8 independent repos
 
 ---
 
@@ -226,13 +243,14 @@
 
 ```
 portfolio/
-├── apps/                           # 6 GitHub submodules
+├── apps/                           # 7 GitHub submodules
 │   ├── quest-crossfire-linkedin-app/
 │   ├── aethelgard-concept-generator/
 │   ├── quest-crossfire-chatbot/
 │   ├── obsidian-ai-assistant/
 │   ├── aethelgard_research_portal/
-│   └── expense-tracker-ai/
+│   ├── expense-tracker-ai/
+│   └── question-forge/            # NEW: Question quality tool
 ├── projects/                       # Major projects
 │   └── aethelgard-saga/           # Private submodule
 ├── n8n-workflows/                 # Automation workflows
