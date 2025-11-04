@@ -295,10 +295,27 @@ portfolio/
 
 ## 📄 License
 
-Each project has its own license:
-- **Apps:** AGPL-3.0 with trademark protection (Aethelgard projects)
-- **Workflows:** MIT License
+**Portfolio Documentation:** AGPL-3.0 - See [LICENSE](LICENSE) file for details.
+
+**Submodule Licenses:** Each project has its own license:
+- **Apps:** AGPL-3.0 with trademark protection
+- **Workflows:** MIT License (documentation only)
 - **Personal Projects:** See individual repositories
+
+### What This Means
+- ✅ Portfolio documentation is open source (AGPL-3.0)
+- ✅ Each submodule retains its original license
+- ✅ Trademark protection applies (QUEST AND CROSSFIRE™, AETHELGARD ACADEMY™, AETHELGARD AXIS™)
+- ✅ See individual repositories for specific project licenses
+
+### Contributing
+
+Interested in contributing? See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+- Improving portfolio documentation
+- Adding new projects
+- Reporting issues
+- Submodule management
+- Pull request process
 
 ---
 

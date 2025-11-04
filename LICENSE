@@ -1,0 +1,57 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2025 Asheesh Ranjan Srivastava
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+================================================================================
+
+ADDITIONAL NOTICES
+
+Portfolio Structure:
+This repository is a collection of independent projects (Git submodules).
+Each submodule has its own license and terms. This AGPL-3.0 license applies
+to the portfolio documentation, structure, and organization only.
+
+Individual Project Licenses:
+- quest-crossfire-linkedin-app: AGPL-3.0
+- aethelgard-concept-generator: AGPL-3.0
+- quest-crossfire-chatbot: AGPL-3.0
+- obsidian-ai-assistant: AGPL-3.0
+- aethelgard-research-portal: AGPL-3.0
+- expense-tracker-ai: AGPL-3.0
+- question-forge: AGPL-3.0
+- aethelgard-saga (Aethelgard Academy): Private/Proprietary
+
+Refer to individual repositories for specific licensing terms.
+
+Trademarks:
+- QUEST AND CROSSFIRE™ (Filed - awaiting certification)
+- AETHELGARD ACADEMY™ (Filed - awaiting certification)
+- AETHELGARD AXIS™ (Filed - awaiting certification)
+
+These trademarks are proprietary and not covered by the AGPL-3.0 license.
+Use of these marks requires explicit permission.
+
+AI Assistance:
+This portfolio was developed with assistance from Claude Code (Anthropic).
+
+The author retains copyright while making the documentation freely available
+under AGPL-3.0.
+
+================================================================================
+
+For the complete AGPL-3.0 license text, see:
+https://www.gnu.org/licenses/agpl-3.0.txt
