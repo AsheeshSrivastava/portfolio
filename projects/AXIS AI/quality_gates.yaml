@@ -1,0 +1,13 @@
+rubric:
+  pass_min_overall: 85
+gates:
+  coverage_min: 0.65
+  citation_density_min: 1.0
+  exec_ok: true
+  scope_allow:
+    - core-python
+    - numpy
+    - pandas
+    - matplotlib
+    - seaborn
+    - scikit-learn

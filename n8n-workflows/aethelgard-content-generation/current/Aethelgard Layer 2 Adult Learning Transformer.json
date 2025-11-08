@@ -1,0 +1,308 @@
+{
+  "name": "Aethelgard Layer 2 Adult Learning Transformer",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "  // Access webhook data\n  let webhookData;\n  try {\n    webhookData = $('Webhook Trigger').first().json;\n  } catch (e) {\n    const allItems = $items();\n    webhookData = allItems.find(item => item.json.conceptId)?.json;\n  }\n\n  if (!webhookData || Object.keys(webhookData).length === 0) {\n    const inputs = $input.all();\n    for (const item of inputs) {\n      if (item.json.conceptId || item.json.body?.conceptId) {\n        webhookData = item.json;\n        break;\n      }\n    }\n  }\n\n  const conceptId = webhookData?.conceptId || webhookData?.body?.conceptId;\n\n  if (!conceptId) {\n    throw new Error('conceptId is missing');\n  }\n\n  // Get Layer 1 content from binary data\n  const layer1Binary = await this.helpers.getBinaryDataBuffer(0, 'data');\n  const layer1Text = layer1Binary.toString('utf-8');\n  const layer1Content = JSON.parse(layer1Text);\n\n  if (!layer1Content || !layer1Content.data) {\n    throw new Error('Invalid Layer 1 content data');\n  }\n\n  // Parse the nested output field\n  const baseContent = typeof layer1Content.data.output === 'string' \n    ? JSON.parse(layer1Content.data.output)\n    : layer1Content.data.output;\n\n  // Build Layer 2 transformation prompt\n  const promptParts = [\n    'You are an expert in andragogy (adult learning theory) and instructional design.',\n    '',\n    'TASK: Transform the following base educational content into an adult learning optimized version.',\n    '',\n    'CONCEPT: ' + baseContent.conceptName,\n    'DOMAIN: ' + baseContent.domain,\n    '',\n    'BASE CONTENT:',\n    JSON.stringify(baseContent.content, null, 2),\n    '',\n    'APPLY MALCOLM KNOWLES\\' 6 PRINCIPLES OF ADULT LEARNING:',\n    '1. Self-Concept: Emphasize learner autonomy and self-direction',\n    '2. Experience: Leverage adult learners\\' prior experiences',\n    '3. Readiness: Connect to real-world application and career relevance',\n    '4. Orientation: Focus on problem-centered rather than content-centered',\n    '5. Motivation: Appeal to intrinsic motivators (competence, purpose, growth)',\n    '6. Need to Know: Explicitly state \"why\" they need to learn this',\n    '',\n    'TRANSFORMATIONS TO APPLY:',\n    '',\n    '**1. Problem Section Enhancements:**',\n    '- Add \"Career Context\" - specific job roles/situations where this matters',\n    '- Add \"Real-World Stakes\" - what happens if you don\\'t know this (consequences)',\n    '- Add \"Immediate Applicability\" - how learners can use this within 24 hours',\n    '- Keep existing scenario but add professional context',\n    '',\n    '**2. System Section Enhancements:**',\n    '- Add \"Mental Model\" - conceptual framework for organizing knowledge',\n    '- Add \"Decision Framework\" - when to use X vs Y (practical decision trees)',\n    '- Add \"Common Professional Patterns\" - how experts actually use this',\n    '- Transform passive explanations into active discovery questions',\n    '- Add \"Reflection Prompts\" after each major sub-concept',\n    '',\n    '**3. Win Section Enhancements:**',\n    '- Add \"Competency Markers\" - observable behaviors that show mastery',\n    '- Add \"Portfolio Projects\" - specific projects to demonstrate skill',\n    '- Add \"Interview Readiness\" - how to discuss this in job interviews',\n    '- Add \"Mistake Recovery\" - how to debug/fix when things go wrong',\n    '',\n    '**4. Exercise Enhancements:**',\n    '- Frame exercises as \"Professional Scenarios\" not academic problems',\n    '- Add context: \"You\\'re a junior developer and...\"',\n    '- Add \"What Would You Google?\" prompts (teach self-sufficiency)',\n    '- Add \"Code Review\" exercises (peer learning simulation)',\n    '',\n    'RETURN ONLY VALID JSON with this exact structure:',\n    '{',\n    '  \"conceptId\": \"string\",',\n    '  \"conceptName\": \"string\",',\n    '  \"domain\": \"string\",',\n    '  \"subdomain\": \"string\",',\n    '  \"estimatedMinutes\": number,',\n    '  \"layer\": 2,',\n    '  \"content\": {',\n    '    \"problem\": {',\n    '      \"title\": \"string\",',\n    '      \"scenario\": \"string (150-200 words with professional context)\",',\n    '      \"painPoint\": \"string\",',\n    '      \"motivation\": \"string\",',\n    '      \"careerContext\": \"string (NEW - job roles where this matters)\",',\n    '      \"realWorldStakes\": \"string (NEW - consequences of not knowing)\",',\n    '      \"immediateApplicability\": \"string (NEW - use within 24 hours)\"',\n    '    },',\n    '    \"system\": {',\n    '      \"title\": \"string\",',\n    '      \"mentalModel\": \"string (NEW - conceptual framework)\",',\n    '      \"explanation\": \"string (700-900 words, discovery-oriented)\",',\n    '      \"decisionFramework\": \"string (NEW - when to use X vs Y)\",',\n    '      \"professionalPatterns\": [\"string (NEW - 3-5 expert patterns)\"],',\n    '      \"subConcepts\": [\"array of strings\"],',\n    '      \"codeExamples\": [',\n    '        {',\n    '          \"title\": \"string (framed as professional scenario)\",',\n    '          \"code\": \"string\",',\n    '          \"explanation\": \"string\",',\n    '          \"output\": \"string\",',\n    '          \"reflectionPrompt\": \"string (NEW - metacognitive question)\"',\n    '        }',\n    '      ],',\n    '      \"commonMistakes\": [\"array of strings\"],',\n    '      \"bestPractices\": [\"array of strings\"],',\n    '      \"mistakeRecovery\": [\"string (NEW - how to debug/fix)\"]',\n    '    },',\n    '    \"win\": {',\n    '      \"title\": \"string\",',\n    '      \"applications\": [\"array of strings\"],',\n    '      \"competencyMarkers\": [\"string (NEW - observable mastery behaviors)\"],',\n    '      \"portfolioProjects\": [\"string (NEW - 2-3 project ideas)\"],',\n    '      \"interviewReadiness\": \"string (NEW - how to discuss in interviews)\",',\n    '      \"nextSteps\": \"string\",',\n    '      \"confidenceBuilder\": \"string\"',\n    '    },',\n    '    \"exercises\": [',\n    '      {',\n    '        \"type\": \"professional-scenario\",',\n    '        \"context\": \"string (NEW - job scenario context)\",',\n    '        \"question\": \"string\",',\n    '        \"options\": [\"array (if applicable)\"],',\n    '        \"correctAnswer\": \"string\",',\n    '        \"explanation\": \"string\",',\n    '        \"whatToGoogle\": \"string (NEW - teach self-learning)\"',\n    '      }',\n    '    ],',\n    '    \"metadata\": {',\n    '      \"prerequisites\": [\"array\"],',\n    '      \"unlocks\": [\"array\"],',\n    '      \"libraries\": [\"array\"],',\n    '      \"learningObjectives\": [\"array\"]',\n    '    }',\n  }',\n '}',\n    '',\n    'IMPORTANT:',\n    '- Keep all original code examples and explanations',\n    '- ADD adult learning enhancements (don\\'t replace, augment)',\n    '- Maintain beginner-friendly language',\n    '- Focus on intrinsic motivation (competence, autonomy, purpose)',\n    '- Return ONLY JSON, no markdown, no code blocks',\n  ];\n\n  const prompt = promptParts.join('\\n');\n\n  return [{\n    json: {\n      prompt: prompt,\n      conceptId: conceptId,\n      conceptName: baseContent.conceptName,\n      domain: baseContent.domain,\n      subdomain: baseContent.subdomain,\n      layer1Content: baseContent\n    }\n  }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1728,
+        64
+      ],
+      "id": "e6d8e3d5-61c2-443f-bb43-7ec1deaeee04",
+      "name": "Build Layer 2 Prompt"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"success\": true,\n  \"message\": \"Layer 2 content generated successfully\",\n  \"conceptId\": $json.conceptId,\n  \"conceptName\": $json.conceptName,\n  \"domain\": $json.domain,\n  \"subdomain\": $json.subdomain,\n  \"layer\": 2,\n  \"filesCreated\": [\n    $json.conceptId + \"_layer2.json\"\n  ],\n  \"generatedAt\": $json.jsonContent.generatedAt\n} }}",
+        "options": {}
+      },
+      "id": "8a5a28da-e74b-42b5-a8fe-c52f75312748",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "6612f93f-efa0-42f6-8ee1-2522b168d16b",
+      "name": "Update Progress Tracker",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        64
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.conceptId }}_layer2.json",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "FOLDER_ID_FOR_LAYER2",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "2e06f089-7c25-45d4-b7cc-349cfa3da282",
+      "name": "Save Layer 2 JSON to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -640,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "INPUT_LAYER1_FILE_ID",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "b656ca5b-30a3-4756-a79a-a3a3baecf481",
+      "name": "Read Layer 1 Content",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2032,
+        64
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aethelgard-generate-layer2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9ea93c70-565d-45ec-a442-790147c03606",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2256,
+        64
+      ],
+      "webhookId": "aethelgard-layer2-transformer"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -1520,
+        64
+      ],
+      "id": "ae061d06-f7b2-4ba4-877b-5118538d1f8f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1520,
+        416
+      ],
+      "id": "cd5b61e5-e5c9-45d1-9e65-0f7dfbf5e313",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ta7KXbvN8mf22jwT",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ensure proper JSON formatting\nconst aiOutput = $input.all()[0].json;\n\n// If the output is a string, parse it\nconst jsonData = typeof aiOutput === 'string' \n  ? JSON.parse(aiOutput) \n  : aiOutput;\n\n// Add generation metadata\njsonData.layer = 2;\njsonData.generatedAt = new Date().toISOString();\njsonData.transformedFrom = 'layer1';\n\n// Return formatted JSON\nreturn [{\n  json: {\n    data: jsonData,\n    filename: `${jsonData.conceptId}_layer2_${new Date().toISOString()}.json`\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1168,
+        64
+      ],
+      "id": "768c8d6f-fa60-4356-a06f-043c6434c457",
+      "name": "Format JSON Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jsonContent = JSON.stringify($input.all()[0].json, null, 2);\nconst buffer = Buffer.from(jsonContent, 'utf8');\n\nreturn [{\n  json: {},\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/json',\n      fileName: `layer2_${Date.now()}.json`\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        64
+      ],
+      "id": "73061897-0b88-494b-9b6a-c3733157045e",
+      "name": "Convert to Binary"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Build Layer 2 Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Progress Tracker": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Layer 2 JSON to Drive": {
+      "main": [
+        [
+          {
+            "node": "Update Progress Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Layer 1 Content": {
+      "main": [
+        [
+          {
+            "node": "Build Layer 2 Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Layer 1 Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Format JSON Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format JSON Output": {
+      "main": [
+        [
+          {
+            "node": "Convert to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Binary": {
+      "main": [
+        [
+          {
+            "node": "Save Layer 2 JSON to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "layer2-adult-learning-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "Layer2AdultLearning",
+  "tags": []
+}

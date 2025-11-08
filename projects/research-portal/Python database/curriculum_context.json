@@ -1,0 +1,983 @@
+{
+  "version": "1.0-mvp",
+  "totalConcepts": 72,
+  "estimatedTotalHours": 75,
+  "lastUpdated": "2025-11-02T00:00:00Z",
+  "domains": [
+    {
+      "id": "domain-1",
+      "name": "Python Environment & Setup",
+      "conceptCount": 15,
+      "estimatedHours": 3,
+      "description": "Master Python development environment setup with Anaconda, conda, virtual environments, and Jupyter notebooks",
+      "subdomains": [
+        {
+          "id": "subdomain-1-1",
+          "name": "Environment Mastery",
+          "conceptCount": 15,
+          "concepts": [
+            {
+              "id": "00-01",
+              "name": "Why Anaconda?",
+              "estimatedMinutes": 15,
+              "prerequisites": [],
+              "libraries": [],
+              "learningObjectives": [
+                "Understand Anaconda vs vanilla Python",
+                "Know when to use Anaconda",
+                "Recognize environment management benefits"
+              ]
+            },
+            {
+              "id": "00-02",
+              "name": "Installing Anaconda",
+              "estimatedMinutes": 20,
+              "prerequisites": ["00-01"],
+              "libraries": [],
+              "learningObjectives": [
+                "Download and install Anaconda correctly",
+                "Verify installation success",
+                "Understand installation options"
+              ]
+            },
+            {
+              "id": "00-03",
+              "name": "Anaconda Navigator Overview",
+              "estimatedMinutes": 15,
+              "prerequisites": ["00-02"],
+              "libraries": [],
+              "learningObjectives": [
+                "Navigate Anaconda Navigator interface",
+                "Launch applications from Navigator",
+                "Understand available tools"
+              ]
+            },
+            {
+              "id": "00-04",
+              "name": "Understanding conda",
+              "estimatedMinutes": 20,
+              "prerequisites": ["00-02"],
+              "libraries": [],
+              "learningObjectives": [
+                "Understand what conda is",
+                "Know conda vs pip differences",
+                "Use basic conda commands"
+              ]
+            },
+            {
+              "id": "00-05",
+              "name": "Creating Virtual Environments",
+              "estimatedMinutes": 25,
+              "prerequisites": ["00-04"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create conda environments",
+                "Understand why environments matter",
+                "Name environments appropriately"
+              ]
+            },
+            {
+              "id": "00-06",
+              "name": "Activating & Deactivating Environments",
+              "estimatedMinutes": 15,
+              "prerequisites": ["00-05"],
+              "libraries": [],
+              "learningObjectives": [
+                "Activate conda environments",
+                "Deactivate environments",
+                "Switch between environments"
+              ]
+            },
+            {
+              "id": "00-07",
+              "name": "Installing Packages with conda",
+              "estimatedMinutes": 20,
+              "prerequisites": ["00-06"],
+              "libraries": [],
+              "learningObjectives": [
+                "Install packages using conda",
+                "Specify package versions",
+                "Update packages safely"
+              ]
+            },
+            {
+              "id": "00-08",
+              "name": "Managing Environments",
+              "estimatedMinutes": 20,
+              "prerequisites": ["00-07"],
+              "libraries": [],
+              "learningObjectives": [
+                "List all environments",
+                "Remove environments",
+                "Export environment configurations"
+              ]
+            },
+            {
+              "id": "00-09",
+              "name": "Understanding Channels",
+              "estimatedMinutes": 15,
+              "prerequisites": ["00-07"],
+              "libraries": [],
+              "learningObjectives": [
+                "Understand conda channels",
+                "Use conda-forge channel",
+                "Set channel priorities"
+              ]
+            },
+            {
+              "id": "00-10",
+              "name": "Jupyter Notebook Basics",
+              "estimatedMinutes": 25,
+              "prerequisites": ["00-06"],
+              "libraries": ["jupyter"],
+              "learningObjectives": [
+                "Launch Jupyter Notebook",
+                "Create and run cells",
+                "Understand notebook interface"
+              ]
+            },
+            {
+              "id": "00-11",
+              "name": "Jupyter Lab Introduction",
+              "estimatedMinutes": 20,
+              "prerequisites": ["00-10"],
+              "libraries": ["jupyterlab"],
+              "learningObjectives": [
+                "Launch Jupyter Lab",
+                "Understand Lab vs Notebook",
+                "Use basic Lab features"
+              ]
+            },
+            {
+              "id": "00-12",
+              "name": "Working with Kernels",
+              "estimatedMinutes": 20,
+              "prerequisites": ["00-10"],
+              "libraries": ["jupyter"],
+              "learningObjectives": [
+                "Understand Jupyter kernels",
+                "Switch kernels",
+                "Restart kernels when needed"
+              ]
+            },
+            {
+              "id": "00-13",
+              "name": "Environment YAML Files",
+              "estimatedMinutes": 25,
+              "prerequisites": ["00-08"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create environment.yml files",
+                "Recreate environments from YAML",
+                "Share environments with others"
+              ]
+            },
+            {
+              "id": "00-14",
+              "name": "Troubleshooting conda",
+              "estimatedMinutes": 30,
+              "prerequisites": ["00-08", "00-09"],
+              "libraries": [],
+              "learningObjectives": [
+                "Diagnose common conda errors",
+                "Clean conda cache",
+                "Resolve package conflicts"
+              ]
+            },
+            {
+              "id": "00-15",
+              "name": "Best Practices for Environments",
+              "estimatedMinutes": 20,
+              "prerequisites": ["00-13"],
+              "libraries": [],
+              "learningObjectives": [
+                "Organize environments effectively",
+                "Document environment dependencies",
+                "Maintain reproducible setups"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "domain-2",
+      "name": "Python Core Fundamentals",
+      "conceptCount": 41,
+      "estimatedHours": 50,
+      "description": "Master Python syntax, data structures, control flow, functions, OOP, and advanced programming concepts",
+      "subdomains": [
+        {
+          "id": "subdomain-2-1",
+          "name": "Syntax & Data Types",
+          "conceptCount": 9,
+          "concepts": [
+            {
+              "id": "01-01",
+              "name": "Comments & Documentation",
+              "estimatedMinutes": 45,
+              "prerequisites": [],
+              "libraries": [],
+              "learningObjectives": [
+                "Write single and multi-line comments",
+                "Understand docstring conventions",
+                "Document code effectively"
+              ]
+            },
+            {
+              "id": "01-02",
+              "name": "Variables & Assignment",
+              "estimatedMinutes": 60,
+              "prerequisites": [],
+              "libraries": [],
+              "learningObjectives": [
+                "Create and name variables",
+                "Understand assignment operator",
+                "Follow naming conventions"
+              ]
+            },
+            {
+              "id": "01-03",
+              "name": "Print Function & Output",
+              "estimatedMinutes": 45,
+              "prerequisites": ["01-02"],
+              "libraries": [],
+              "learningObjectives": [
+                "Use print() function",
+                "Format output strings",
+                "Understand sep and end parameters"
+              ]
+            },
+            {
+              "id": "01-04",
+              "name": "Input Function",
+              "estimatedMinutes": 45,
+              "prerequisites": ["01-02"],
+              "libraries": [],
+              "learningObjectives": [
+                "Get user input",
+                "Convert input types",
+                "Handle input validation"
+              ]
+            },
+            {
+              "id": "01-05",
+              "name": "Strings & String Methods",
+              "estimatedMinutes": 90,
+              "prerequisites": ["01-02"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create and manipulate strings",
+                "Use common string methods",
+                "Understand string immutability"
+              ]
+            },
+            {
+              "id": "01-06",
+              "name": "Integers & Floats",
+              "estimatedMinutes": 60,
+              "prerequisites": ["01-02"],
+              "libraries": [],
+              "learningObjectives": [
+                "Work with numeric types",
+                "Perform arithmetic operations",
+                "Understand type differences"
+              ]
+            },
+            {
+              "id": "01-07",
+              "name": "Booleans & Comparison Operators",
+              "estimatedMinutes": 60,
+              "prerequisites": ["01-02"],
+              "libraries": [],
+              "learningObjectives": [
+                "Use boolean values",
+                "Apply comparison operators",
+                "Understand truthiness"
+              ]
+            },
+            {
+              "id": "01-08",
+              "name": "Type Conversion & Casting",
+              "estimatedMinutes": 60,
+              "prerequisites": ["01-06"],
+              "libraries": [],
+              "learningObjectives": [
+                "Convert between types",
+                "Understand implicit vs explicit conversion",
+                "Handle conversion errors"
+              ]
+            },
+            {
+              "id": "01-09",
+              "name": "Operators & Expressions",
+              "estimatedMinutes": 75,
+              "prerequisites": ["01-06", "01-07"],
+              "libraries": [],
+              "learningObjectives": [
+                "Use arithmetic, logical, and bitwise operators",
+                "Understand operator precedence",
+                "Build complex expressions"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-2-2",
+          "name": "Data Structures",
+          "conceptCount": 7,
+          "concepts": [
+            {
+              "id": "02-01",
+              "name": "Lists & List Methods",
+              "estimatedMinutes": 90,
+              "prerequisites": ["01-05"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create and modify lists",
+                "Use list methods (append, extend, insert, remove)",
+                "Understand list indexing and slicing"
+              ]
+            },
+            {
+              "id": "02-02",
+              "name": "Tuples & Immutability",
+              "estimatedMinutes": 60,
+              "prerequisites": ["02-01"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create tuples",
+                "Understand immutability benefits",
+                "Use tuple packing and unpacking"
+              ]
+            },
+            {
+              "id": "02-03",
+              "name": "Dictionaries & Key-Value Pairs",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-01"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create and access dictionaries",
+                "Use dictionary methods",
+                "Iterate over dictionaries"
+              ]
+            },
+            {
+              "id": "02-04",
+              "name": "Sets & Set Operations",
+              "estimatedMinutes": 75,
+              "prerequisites": ["02-01"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create sets",
+                "Perform set operations (union, intersection, difference)",
+                "Understand set uniqueness"
+              ]
+            },
+            {
+              "id": "02-05",
+              "name": "List Comprehensions",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-01"],
+              "libraries": [],
+              "learningObjectives": [
+                "Write list comprehensions",
+                "Understand comprehension syntax",
+                "Know when to use comprehensions"
+              ]
+            },
+            {
+              "id": "02-06",
+              "name": "Dictionary & Set Comprehensions",
+              "estimatedMinutes": 75,
+              "prerequisites": ["02-03", "02-04", "02-05"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create dictionary comprehensions",
+                "Create set comprehensions",
+                "Apply comprehensions effectively"
+              ]
+            },
+            {
+              "id": "02-07",
+              "name": "Nested Data Structures",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-01", "02-03"],
+              "libraries": [],
+              "learningObjectives": [
+                "Work with nested lists and dictionaries",
+                "Access nested data",
+                "Understand data structure design"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-2-3",
+          "name": "Control Flow",
+          "conceptCount": 5,
+          "concepts": [
+            {
+              "id": "02-08",
+              "name": "If-Elif-Else Statements",
+              "estimatedMinutes": 75,
+              "prerequisites": ["01-07"],
+              "libraries": [],
+              "learningObjectives": [
+                "Write conditional statements",
+                "Use elif for multiple conditions",
+                "Understand indentation rules"
+              ]
+            },
+            {
+              "id": "02-09",
+              "name": "For Loops",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-01"],
+              "libraries": [],
+              "learningObjectives": [
+                "Iterate over sequences",
+                "Use range() function",
+                "Understand loop variables"
+              ]
+            },
+            {
+              "id": "02-10",
+              "name": "While Loops",
+              "estimatedMinutes": 75,
+              "prerequisites": ["01-07"],
+              "libraries": [],
+              "learningObjectives": [
+                "Write while loops",
+                "Avoid infinite loops",
+                "Use loop conditions effectively"
+              ]
+            },
+            {
+              "id": "02-11",
+              "name": "Break, Continue & Pass",
+              "estimatedMinutes": 60,
+              "prerequisites": ["02-09", "02-10"],
+              "libraries": [],
+              "learningObjectives": [
+                "Control loop execution",
+                "Use break to exit loops",
+                "Understand continue and pass"
+              ]
+            },
+            {
+              "id": "02-12",
+              "name": "Nested Loops & Loop Patterns",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-09"],
+              "libraries": [],
+              "learningObjectives": [
+                "Write nested loops",
+                "Understand loop patterns",
+                "Optimize loop performance"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-2-4",
+          "name": "Functions",
+          "conceptCount": 5,
+          "concepts": [
+            {
+              "id": "02-13",
+              "name": "Defining & Calling Functions",
+              "estimatedMinutes": 90,
+              "prerequisites": [],
+              "libraries": [],
+              "learningObjectives": [
+                "Define functions with def",
+                "Call functions with arguments",
+                "Understand return values"
+              ]
+            },
+            {
+              "id": "02-14",
+              "name": "Parameters & Arguments",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-13"],
+              "libraries": [],
+              "learningObjectives": [
+                "Use positional and keyword arguments",
+                "Set default parameter values",
+                "Understand *args and **kwargs"
+              ]
+            },
+            {
+              "id": "02-15",
+              "name": "Scope & Global Variables",
+              "estimatedMinutes": 75,
+              "prerequisites": ["02-13"],
+              "libraries": [],
+              "learningObjectives": [
+                "Understand local vs global scope",
+                "Use global keyword appropriately",
+                "Avoid scope-related bugs"
+              ]
+            },
+            {
+              "id": "02-16",
+              "name": "Lambda Functions",
+              "estimatedMinutes": 60,
+              "prerequisites": ["02-13"],
+              "libraries": [],
+              "learningObjectives": [
+                "Write lambda expressions",
+                "Know when to use lambdas",
+                "Apply lambdas with map/filter/reduce"
+              ]
+            },
+            {
+              "id": "02-17",
+              "name": "Docstrings & Function Documentation",
+              "estimatedMinutes": 60,
+              "prerequisites": ["02-13"],
+              "libraries": [],
+              "learningObjectives": [
+                "Write function docstrings",
+                "Follow docstring conventions",
+                "Use help() function"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-2-5",
+          "name": "Object-Oriented Programming",
+          "conceptCount": 4,
+          "concepts": [
+            {
+              "id": "02-18",
+              "name": "Classes & Objects",
+              "estimatedMinutes": 120,
+              "prerequisites": ["02-13"],
+              "libraries": [],
+              "learningObjectives": [
+                "Define classes",
+                "Create objects (instances)",
+                "Understand __init__ method"
+              ]
+            },
+            {
+              "id": "02-19",
+              "name": "Attributes & Methods",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-18"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create instance attributes",
+                "Define instance methods",
+                "Use self correctly"
+              ]
+            },
+            {
+              "id": "02-20",
+              "name": "Inheritance",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-18"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create subclasses",
+                "Override methods",
+                "Use super() function"
+              ]
+            },
+            {
+              "id": "02-21",
+              "name": "Encapsulation & Special Methods",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-19"],
+              "libraries": [],
+              "learningObjectives": [
+                "Understand public/private conventions",
+                "Use __str__ and __repr__",
+                "Implement operator overloading"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-2-6",
+          "name": "Modules & Packages",
+          "conceptCount": 3,
+          "concepts": [
+            {
+              "id": "02-22",
+              "name": "Importing Modules",
+              "estimatedMinutes": 75,
+              "prerequisites": [],
+              "libraries": [],
+              "learningObjectives": [
+                "Import standard library modules",
+                "Use import variations (from, as)",
+                "Understand module search path"
+              ]
+            },
+            {
+              "id": "02-23",
+              "name": "Creating Your Own Modules",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-22"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create .py module files",
+                "Organize code into modules",
+                "Use if __name__ == '__main__'"
+              ]
+            },
+            {
+              "id": "02-24",
+              "name": "Packages & __init__.py",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-23"],
+              "libraries": [],
+              "learningObjectives": [
+                "Create package directories",
+                "Understand __init__.py",
+                "Import from packages"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-2-7",
+          "name": "File Operations",
+          "conceptCount": 4,
+          "concepts": [
+            {
+              "id": "02-25",
+              "name": "Reading Files",
+              "estimatedMinutes": 75,
+              "prerequisites": [],
+              "libraries": [],
+              "learningObjectives": [
+                "Open files with open()",
+                "Read file contents",
+                "Use with statement (context manager)"
+              ]
+            },
+            {
+              "id": "02-26",
+              "name": "Writing Files",
+              "estimatedMinutes": 75,
+              "prerequisites": ["02-25"],
+              "libraries": [],
+              "learningObjectives": [
+                "Write to files",
+                "Understand write modes (w, a, x)",
+                "Create new files safely"
+              ]
+            },
+            {
+              "id": "02-27",
+              "name": "Working with CSV Files",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-25"],
+              "libraries": ["csv"],
+              "learningObjectives": [
+                "Read CSV files",
+                "Write CSV files",
+                "Use csv module"
+              ]
+            },
+            {
+              "id": "02-28",
+              "name": "Working with JSON",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-25", "02-03"],
+              "libraries": ["json"],
+              "learningObjectives": [
+                "Parse JSON data",
+                "Write JSON files",
+                "Convert between Python objects and JSON"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-2-8",
+          "name": "Advanced Topics",
+          "conceptCount": 4,
+          "concepts": [
+            {
+              "id": "02-29",
+              "name": "Exception Handling Basics",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-08"],
+              "libraries": [],
+              "learningObjectives": [
+                "Use try-except blocks",
+                "Catch specific exceptions",
+                "Understand else and finally clauses"
+              ]
+            },
+            {
+              "id": "02-30",
+              "name": "Iterators & Generators",
+              "estimatedMinutes": 120,
+              "prerequisites": ["02-09", "02-13"],
+              "libraries": [],
+              "learningObjectives": [
+                "Understand iterators",
+                "Create generator functions with yield",
+                "Use generator expressions"
+              ]
+            },
+            {
+              "id": "02-31",
+              "name": "Decorators",
+              "estimatedMinutes": 120,
+              "prerequisites": ["02-13", "02-16"],
+              "libraries": [],
+              "learningObjectives": [
+                "Understand decorator syntax",
+                "Create simple decorators",
+                "Use common built-in decorators"
+              ]
+            },
+            {
+              "id": "02-32",
+              "name": "Context Managers",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-25"],
+              "libraries": [],
+              "learningObjectives": [
+                "Understand with statement",
+                "Create context managers",
+                "Use contextlib module"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "domain-3",
+      "name": "Essential Data Science Libraries",
+      "conceptCount": 16,
+      "estimatedHours": 22,
+      "description": "Master error handling, NumPy arrays, and pandas DataFrames - essential tools for data science",
+      "subdomains": [
+        {
+          "id": "subdomain-3-1",
+          "name": "Error Handling & Debugging",
+          "conceptCount": 5,
+          "concepts": [
+            {
+              "id": "03-01-01",
+              "name": "Exception Handling Basics",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-08"],
+              "libraries": [],
+              "learningObjectives": [
+                "Use try-except blocks effectively",
+                "Catch specific exception types",
+                "Understand else and finally clauses"
+              ]
+            },
+            {
+              "id": "03-01-02",
+              "name": "Raising Exceptions",
+              "estimatedMinutes": 75,
+              "prerequisites": ["03-01-01"],
+              "libraries": [],
+              "learningObjectives": [
+                "Raise exceptions with raise",
+                "Create custom exception classes",
+                "Use assertions appropriately"
+              ]
+            },
+            {
+              "id": "03-01-03",
+              "name": "Debugging with pdb",
+              "estimatedMinutes": 120,
+              "prerequisites": ["03-01-01"],
+              "libraries": ["pdb"],
+              "learningObjectives": [
+                "Use Python debugger (pdb)",
+                "Set breakpoints",
+                "Inspect variables during execution"
+              ]
+            },
+            {
+              "id": "03-01-04",
+              "name": "Logging Basics",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-25"],
+              "libraries": ["logging"],
+              "learningObjectives": [
+                "Configure logging module",
+                "Use different log levels",
+                "Write logs to files"
+              ]
+            },
+            {
+              "id": "03-01-05",
+              "name": "Common Python Errors & Solutions",
+              "estimatedMinutes": 90,
+              "prerequisites": ["03-01-01"],
+              "libraries": [],
+              "learningObjectives": [
+                "Diagnose NameError, TypeError, ValueError",
+                "Fix IndexError and KeyError",
+                "Understand error messages"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-3-2",
+          "name": "NumPy Fundamentals",
+          "conceptCount": 6,
+          "concepts": [
+            {
+              "id": "03-02-01",
+              "name": "NumPy Basics & Array Creation",
+              "estimatedMinutes": 90,
+              "prerequisites": ["02-01"],
+              "libraries": ["numpy"],
+              "learningObjectives": [
+                "Import NumPy correctly (import numpy as np)",
+                "Create arrays using np.array(), np.zeros(), np.ones(), np.arange(), np.linspace()",
+                "Understand array attributes (shape, dtype, ndim, size)"
+              ]
+            },
+            {
+              "id": "03-02-02",
+              "name": "Array Indexing & Slicing",
+              "estimatedMinutes": 90,
+              "prerequisites": ["03-02-01"],
+              "libraries": ["numpy"],
+              "learningObjectives": [
+                "Access array elements by index",
+                "Slice 1D and 2D arrays",
+                "Use boolean indexing"
+              ]
+            },
+            {
+              "id": "03-02-03",
+              "name": "Array Operations",
+              "estimatedMinutes": 120,
+              "prerequisites": ["03-02-01"],
+              "libraries": ["numpy"],
+              "learningObjectives": [
+                "Perform vectorized operations",
+                "Use mathematical functions (np.sin, np.exp, etc.)",
+                "Apply broadcasting rules"
+              ]
+            },
+            {
+              "id": "03-02-04",
+              "name": "Array Manipulation",
+              "estimatedMinutes": 90,
+              "prerequisites": ["03-02-02"],
+              "libraries": ["numpy"],
+              "learningObjectives": [
+                "Reshape arrays",
+                "Concatenate and stack arrays",
+                "Transpose arrays"
+              ]
+            },
+            {
+              "id": "03-02-05",
+              "name": "Random Numbers & Statistics",
+              "estimatedMinutes": 90,
+              "prerequisites": ["03-02-01"],
+              "libraries": ["numpy"],
+              "learningObjectives": [
+                "Generate random numbers",
+                "Calculate mean, median, std, variance",
+                "Use np.random module"
+              ]
+            },
+            {
+              "id": "03-02-06",
+              "name": "Linear Algebra Basics",
+              "estimatedMinutes": 120,
+              "prerequisites": ["03-02-03"],
+              "libraries": ["numpy"],
+              "learningObjectives": [
+                "Perform matrix multiplication",
+                "Calculate dot products",
+                "Use np.linalg module"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "subdomain-3-3",
+          "name": "pandas Fundamentals",
+          "conceptCount": 5,
+          "concepts": [
+            {
+              "id": "03-03-01",
+              "name": "pandas Basics & Series",
+              "estimatedMinutes": 90,
+              "prerequisites": ["03-02-01"],
+              "libraries": ["pandas", "numpy"],
+              "learningObjectives": [
+                "Import pandas correctly (import pandas as pd)",
+                "Create Series objects",
+                "Understand labeled indexing"
+              ]
+            },
+            {
+              "id": "03-03-02",
+              "name": "DataFrames & Basic Operations",
+              "estimatedMinutes": 120,
+              "prerequisites": ["03-03-01", "02-03"],
+              "libraries": ["pandas", "numpy"],
+              "learningObjectives": [
+                "Create DataFrames from dictionaries/lists",
+                "Access columns and rows",
+                "Understand DataFrame structure"
+              ]
+            },
+            {
+              "id": "03-03-03",
+              "name": "Selection & Filtering",
+              "estimatedMinutes": 120,
+              "prerequisites": ["03-03-02"],
+              "libraries": ["pandas"],
+              "learningObjectives": [
+                "Use .loc and .iloc",
+                "Filter rows with boolean conditions",
+                "Select specific columns"
+              ]
+            },
+            {
+              "id": "03-03-04",
+              "name": "Data Cleaning Basics",
+              "estimatedMinutes": 120,
+              "prerequisites": ["03-03-02"],
+              "libraries": ["pandas"],
+              "learningObjectives": [
+                "Handle missing data (dropna, fillna)",
+                "Remove duplicates",
+                "Rename columns"
+              ]
+            },
+            {
+              "id": "03-03-05",
+              "name": "Basic Data Analysis",
+              "estimatedMinutes": 120,
+              "prerequisites": ["03-03-02"],
+              "libraries": ["pandas"],
+              "learningObjectives": [
+                "Use describe(), info(), value_counts()",
+                "Group data with groupby()",
+                "Calculate basic statistics"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

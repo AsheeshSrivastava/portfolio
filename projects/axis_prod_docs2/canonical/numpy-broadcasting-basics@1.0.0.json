@@ -1,0 +1,64 @@
+{
+  "content_id": "numpy-broadcasting-basics",
+  "version": "1.0.0",
+  "type": "concept",
+  "title": "NumPy Broadcasting: The Basics",
+  "summary": "How arrays with different shapes interact via broadcasting in NumPy, with one concrete example.",
+  "body_markdown": "## What is broadcasting?\nBroadcasting describes how NumPy treats arrays with different shapes...\n\n### Example\n```python\nimport numpy as np\nA = np.array([1,2,3]).reshape(3,1)\nB = np.array([10,20,30,40])\nA + B\n```",
+  "unit": "numpy",
+  "topic": [
+    "broadcasting",
+    "vectorization"
+  ],
+  "difficulty": "intermediate",
+  "bloom": "understand",
+  "mode_default": "coach",
+  "code_examples": [
+    {
+      "code": "import numpy as np\nnp.array([1,2,3]).reshape(3,1) + np.array([10,20,30,40])",
+      "expected_output": null,
+      "runnable": true
+    }
+  ],
+  "citations": [
+    {
+      "title": "NumPy Broadcasting",
+      "url": "https://numpy.org/doc/stable/user/basics.broadcasting.html",
+      "license": "BSD-3-Clause",
+      "section_anchor": "#general-broadcasting-rules"
+    }
+  ],
+  "prerequisites": [
+    "numpy-arrays-basics"
+  ],
+  "index_meta": {
+    "embedding_version": "e5-large-v3@1.0",
+    "chunk_strategy_version": "heading_semantic@1",
+    "content_checksum": "sha256:5a6671602b61b12aa8607a5655a03b34317bc6139266a1ceab7db52125a57019"
+  },
+  "qc_report": {
+    "overall_score": 90,
+    "passes_quality": true,
+    "gates": [
+      {
+        "name": "coverage>=0.65",
+        "passed": true,
+        "details": "0.78"
+      },
+      {
+        "name": "citation_density>=1.0",
+        "passed": true,
+        "details": "1.2"
+      },
+      {
+        "name": "exec_ok",
+        "passed": true
+      },
+      {
+        "name": "scope_ok",
+        "passed": true
+      }
+    ],
+    "trace_url": null
+  }
+}

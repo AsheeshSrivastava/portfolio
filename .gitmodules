@@ -1,0 +1,25 @@
+[submodule "apps/quest-crossfire-linkedin-app"]
+	path = apps/quest-crossfire-linkedin-app
+	url = https://github.com/AsheeshSrivastava/quest-crossfire-linkedin-app.git
+[submodule "apps/quest-crossfire-chatbot"]
+	path = apps/quest-crossfire-chatbot
+	url = https://github.com/AsheeshSrivastava/quest-crossfire-chatbot.git
+[submodule "apps/obsidian-ai-assistant"]
+	path = apps/obsidian-ai-assistant
+	url = https://github.com/AsheeshSrivastava/obsidian-ai-assistant.git
+[submodule "apps/expense-tracker-ai"]
+	path = apps/expense-tracker-ai
+	url = https://github.com/AsheeshSrivastava/expense-tracker-ai.git
+[submodule "apps/aethelgard-concept-generator"]
+	path = apps/aethelgard-concept-generator
+	url = https://github.com/AsheeshSrivastava/aethelgard-concept-generator.git
+[submodule "apps/aethelgard_research_portal"]
+	path = apps/aethelgard_research_portal
+	url = https://github.com/AsheeshSrivastava/aethelgard-research-portal.git
+[submodule "projects/aethelgard-saga"]
+	path = projects/aethelgard-saga
+	url = https://github.com/AsheeshSrivastava/Aethelgard_Saga.git
+	branch = ai-enhancements
+[submodule "apps/question-forge"]
+	path = apps/question-forge
+	url = https://github.com/AsheeshSrivastava/question-forge.git

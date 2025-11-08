@@ -1,0 +1,62 @@
+{
+  "content_id": "python-list-comprehensions-basics",
+  "version": "1.0.0",
+  "type": "concept",
+  "title": "Python List Comprehensions: The Basics",
+  "summary": "A concise way to build lists in Python with an optional condition.",
+  "body_markdown": "## List Comprehensions\nList comprehensions create lists using the syntax `[expr for item in iterable if cond]`.\n\n### Tiny Exercise\nWrite a one-liner that returns the squares of numbers 1..5.",
+  "unit": "python",
+  "topic": [
+    "lists",
+    "comprehensions"
+  ],
+  "difficulty": "beginner",
+  "bloom": "apply",
+  "mode_default": "coach",
+  "code_examples": [
+    {
+      "code": "squares = [n*n for n in range(1,6)]",
+      "expected_output": null,
+      "runnable": true
+    }
+  ],
+  "citations": [
+    {
+      "title": "Python Tutorial \u2014 Data Structures",
+      "url": "https://docs.python.org/3/tutorial/datastructures.html#list-comprehensions",
+      "license": "PSF",
+      "section_anchor": "#list-comprehensions"
+    }
+  ],
+  "prerequisites": [],
+  "index_meta": {
+    "embedding_version": "e5-large-v3@1.0",
+    "chunk_strategy_version": "heading_semantic@1",
+    "content_checksum": "sha256:d1632fea5bfbe90406f19ba6c69edb557a81024168181552d0f441915fcd9e9b"
+  },
+  "qc_report": {
+    "overall_score": 88,
+    "passes_quality": true,
+    "gates": [
+      {
+        "name": "coverage>=0.65",
+        "passed": true,
+        "details": "0.72"
+      },
+      {
+        "name": "citation_density>=1.0",
+        "passed": true,
+        "details": "1.0"
+      },
+      {
+        "name": "exec_ok",
+        "passed": true
+      },
+      {
+        "name": "scope_ok",
+        "passed": true
+      }
+    ],
+    "trace_url": null
+  }
+}

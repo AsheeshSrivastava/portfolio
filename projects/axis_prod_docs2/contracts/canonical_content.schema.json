@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CanonicalContent",
+  "type": "object",
+  "required": [
+    "content_id",
+    "version",
+    "type",
+    "title",
+    "summary",
+    "body_markdown",
+    "unit",
+    "difficulty",
+    "citations",
+    "index_meta",
+    "qc_report"
+  ],
+  "properties": {
+    "content_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "concept",
+        "exercise",
+        "question",
+        "example"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 120
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 30,
+      "maxLength": 500
+    },
+    "body_markdown": {
+      "type": "string",
+      "minLength": 50
+    },
+    "unit": {
+      "type": "string"
+    },
+    "topic": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
+    },
+    "bloom": {
+      "type": "string",
+      "enum": [
+        "remember",
+        "understand",
+        "apply",
+        "analyze",
+        "evaluate",
+        "create"
+      ],
+      "nullable": true
+    },
+    "mode_default": {
+      "type": "string",
+      "enum": [
+        "coach",
+        "hybrid",
+        "socratic"
+      ],
+      "default": "coach"
+    },
+    "code_examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "expected_output": {
+            "type": "string",
+            "nullable": true
+          },
+          "runnable": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "citations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "license": {
+            "type": "string"
+          },
+          "doc_id": {
+            "type": "string"
+          },
+          "section_anchor": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+    },
+    "index_meta": {
+      "type": "object",
+      "required": [
+        "embedding_version",
+        "chunk_strategy_version",
+        "content_checksum"
+      ],
+      "properties": {
+        "embedding_version": {
+          "type": "string"
+        },
+        "chunk_strategy_version": {
+          "type": "string"
+        },
+        "content_checksum": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "qc_report": {
+      "type": "object",
+      "required": [
+        "overall_score",
+        "passes_quality",
+        "gates"
+      ],
+      "properties": {
+        "overall_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "passes_quality": {
+          "type": "boolean"
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "passed"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "passed": {
+                "type": "boolean"
+              },
+              "details": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "trace_url": {
+          "type": "string",
+          "nullable": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

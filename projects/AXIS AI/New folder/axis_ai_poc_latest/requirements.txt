@@ -1,0 +1,8 @@
+fastapi>=0.115
+uvicorn>=0.30
+chromadb>=0.4,<0.6
+sentence-transformers>=2.2,<3
+openai>=1.40,<2
+python-dotenv>=1.0
+python-multipart>=0.0.9
+pytest>=8.0

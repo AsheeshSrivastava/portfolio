@@ -1,0 +1,64 @@
+{
+  "content_id": "pandas-groupby-basics",
+  "version": "1.0.0",
+  "type": "concept",
+  "title": "pandas GroupBy: The Basics",
+  "summary": "How to split-apply-combine with groupby in pandas, with caveats.",
+  "body_markdown": "## GroupBy Basics in pandas\nUse `groupby` to split-apply-combine. Avoid chained indexing; check dtypes and NA handling.\n\n### Tiny Exercise\nGroup by 'dept' and compute mean salary.",
+  "unit": "pandas",
+  "topic": [
+    "groupby",
+    "aggregation"
+  ],
+  "difficulty": "intermediate",
+  "bloom": "apply",
+  "mode_default": "coach",
+  "code_examples": [
+    {
+      "code": "df.groupby('dept', as_index=False)['salary'].mean()",
+      "expected_output": null,
+      "runnable": true
+    }
+  ],
+  "citations": [
+    {
+      "title": "pandas User Guide \u2014 GroupBy",
+      "url": "https://pandas.pydata.org/docs/user_guide/groupby.html",
+      "license": "BSD-3-Clause",
+      "section_anchor": "#groupby"
+    }
+  ],
+  "prerequisites": [
+    "pandas-basics"
+  ],
+  "index_meta": {
+    "embedding_version": "e5-large-v3@1.0",
+    "chunk_strategy_version": "heading_semantic@1",
+    "content_checksum": "sha256:d2b9f52ede7ee871de2b1443d25d5e0f04284ad417922bde127201cf62aca50d"
+  },
+  "qc_report": {
+    "overall_score": 87,
+    "passes_quality": true,
+    "gates": [
+      {
+        "name": "coverage>=0.65",
+        "passed": true,
+        "details": "0.70"
+      },
+      {
+        "name": "citation_density>=1.0",
+        "passed": true,
+        "details": "1.2"
+      },
+      {
+        "name": "exec_ok",
+        "passed": true
+      },
+      {
+        "name": "scope_ok",
+        "passed": true
+      }
+    ],
+    "trace_url": null
+  }
+}

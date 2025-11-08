@@ -1,0 +1,139 @@
+{
+  "name": "AI Agent - Obsidian Research to Vault",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "47aae112-5a8b-4df2-aa99-4b24ac0295b8",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Research the latest developments in Obsidian plugin development for 2025.\n  Focus on:\n  - New API features\n  - Best practices for plugin developers\n  - Popular plugin architectures\n  - Community resources\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        240,
+        0
+      ],
+      "id": "d6cd1123-8c8e-4470-a4d9-30f3a9f9fa8f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "chatgpt-4o-latest"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        208
+      ],
+      "id": "0a21d397-26cf-4ae3-b5a1-d0aa62972d75",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "vscPVbqHtDxQUTIx",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $json.output }}",
+        "name": "= Obsidian Development Research - {{$now.format('MM-DD')}}.md",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1gGq2bVtmknWt81ActmDzbOwCrG3X4p-4",
+          "mode": "list",
+          "cachedResultName": "n8n AI Research",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1gGq2bVtmknWt81ActmDzbOwCrG3X4p-4"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        576,
+        0
+      ],
+      "id": "995d8ba8-5e02-4494-a7b5-c9993c698119",
+      "name": "Create file from text",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "rC4dbLYDbgR42Szd",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create file from text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "20041cc7-c698-4029-92de-0913c53b69ea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "BesHhM6ZSTLdDOBQ",
+  "tags": []
+}

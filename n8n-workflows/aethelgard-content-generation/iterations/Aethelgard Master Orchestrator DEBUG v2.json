@@ -1,0 +1,221 @@
+{
+  "name": "Aethelgard Master Orchestrator DEBUG v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aethelgard-orchestrator-debug",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-orchestrator",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2800,
+        300
+      ],
+      "webhookId": "aethelgard-orchestrator-debug"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1e-rI0IPdAbzFVrre_QhdgDjiS3h1h1yj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "read-file1",
+      "name": "Read File 1 (1e-rI0...)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2600,
+        200
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "read-file2",
+      "name": "Read File 2 (1nyKt...)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2600,
+        400
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Use the CORRECT method like Layer 1 workflow does\nconst file1Binary = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst file1Text = file1Binary.toString('utf-8');\nconst file1Json = JSON.parse(file1Text);\n\nreturn [{\n  json: {\n    source: 'Read File 1 (1e-rI0...)',\n    fileId: '1e-rI0IPdAbzFVrre_QhdgDjiS3h1h1yj',\n    keys: Object.keys(file1Json),\n    hasDomains: !!file1Json.domains,\n    hasCompleted: !!file1Json.completed,\n    hasLayer1: !!file1Json.layer1,\n    diagnosis: file1Json.domains ? 'THIS IS CURRICULUM' : 'THIS IS PROGRESS TRACKER'\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2400,
+        200
+      ],
+      "id": "debug-file1",
+      "name": "Debug File 1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Use the CORRECT method like Layer 1 workflow does\nconst file2Binary = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst file2Text = file2Binary.toString('utf-8');\nconst file2Json = JSON.parse(file2Text);\n\nreturn [{\n  json: {\n    source: 'Read File 2 (1nyKt...)',\n    fileId: '1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj',\n    keys: Object.keys(file2Json),\n    hasDomains: !!file2Json.domains,\n    hasCompleted: !!file2Json.completed,\n    hasLayer1: !!file2Json.layer1,\n    diagnosis: file2Json.domains ? 'THIS IS CURRICULUM' : 'THIS IS PROGRESS TRACKER'\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2400,
+        400
+      ],
+      "id": "debug-file2",
+      "name": "Debug File 2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -2200,
+        300
+      ],
+      "id": "merge-results",
+      "name": "Merge Results"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -2000,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read File 1 (1e-rI0...)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read File 2 (1nyKt...)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read File 1 (1e-rI0...)": {
+      "main": [
+        [
+          {
+            "node": "Debug File 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read File 2 (1nyKt...)": {
+      "main": [
+        [
+          {
+            "node": "Debug File 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug File 1": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug File 2": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "orchestrator-debug-v2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "AethelgardOrchestratorDebugV2",
+  "tags": []
+}

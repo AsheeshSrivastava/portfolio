@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(conda env list:*)",
+      "Bash(where:*)",
+      "Bash(C:Userssasheanaconda3Scriptsconda.exe env list)",
+      "Bash(C:ProgramDataanaconda3Scriptsconda.exe env list)",
+      "Bash(powershell -Command \"Get-Command conda -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(powershell:*)",
+      "Bash(test:*)",
+      "Bash(curl:*)",
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(netstat:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(conda activate:*)",
+      "Bash(pip install:*)",
+      "Bash(conda run:*)",
+      "Bash($null)",
+      "Bash(Start-Sleep -Seconds 2)",
+      "Bash(pkill:*)",
+      "Bash(jupyter nbconvert:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

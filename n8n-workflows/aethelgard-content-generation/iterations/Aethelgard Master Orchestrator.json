@@ -1,0 +1,541 @@
+{
+  "name": "Aethelgard Master Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aethelgard-orchestrator",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-orchestrator",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -2800,
+        300
+      ],
+      "webhookId": "aethelgard-orchestrator"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1e-rI0IPdAbzFVrre_QhdgDjiS3h1h1yj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "read-curriculum",
+      "name": "Read Curriculum",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2600,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1nyKt5ZkrB1GivZVR7LfD6IRIIOrUBJLj",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {}
+          }
+        }
+      },
+      "id": "read-progress",
+      "name": "Read Progress Tracker",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2400,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0KFmXVyuNSoftHWs",
+          "name": "Google Drive account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get webhook config\nconst webhookData = $('Webhook Trigger').first().json;\nconst mode = webhookData.mode || 'single'; // 'single' or 'batch'\nconst batchSize = webhookData.batchSize || 5;\nconst layers = webhookData.layers || ['layer1', 'layer2', 'rag', 'layer3']; // which layers to generate\nconst specificConcepts = webhookData.concepts || []; // optional: specific concept IDs\n\n// Get curriculum data from the 'Read Curriculum' node\nconst curriculumNodeData = $('Read Curriculum').first().binary.data.data;\nconst curriculumBuffer = Buffer.from(curriculumNodeData, 'base64');\nconst curriculumText = curriculumBuffer.toString('utf-8');\nconst curriculum = JSON.parse(curriculumText);\n\n// Get progress tracker from the 'Read Progress Tracker' node\nconst progressNodeData = $('Read Progress Tracker').first().binary.data.data;\nconst progressBuffer = Buffer.from(progressNodeData, 'base64');\nconst progressText = progressBuffer.toString('utf-8');\nconst progress = JSON.parse(progressText);\n\n// Build all concepts list\nconst allConcepts = [];\ncurriculum.domains.forEach(d => {\n  d.subdomains.forEach(s => {\n    s.concepts.forEach(c => {\n      allConcepts.push({\n        ...c,\n        domain: d.name,\n        subdomain: s.name\n      });\n    });\n  });\n});\n\n// Filter concepts to process\nlet conceptsToProcess = [];\n\nif (specificConcepts.length > 0) {\n  // Process specific concepts requested\n  conceptsToProcess = allConcepts.filter(c => specificConcepts.includes(c.id));\n} else {\n  // Process pending concepts (not in progress tracker)\n  const completedIds = progress.completed || [];\n  conceptsToProcess = allConcepts.filter(c => !completedIds.includes(c.id));\n}\n\n// Apply batch size limit\nif (mode === 'batch') {\n  conceptsToProcess = conceptsToProcess.slice(0, batchSize);\n}\n\n// Return one item per concept to process\nreturn conceptsToProcess.map(concept => ({\n  json: {\n    conceptId: concept.id,\n    conceptName: concept.name,\n    domain: concept.domain,\n    subdomain: concept.subdomain,\n    estimatedMinutes: concept.estimatedMinutes,\n    layers: layers,\n    mode: mode\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2200,
+        300
+      ],
+      "id": "select-concepts",
+      "name": "Select Concepts to Process"
+    },
+    {
+      "parameters": {
+        "url": "=https://YOUR_N8N_INSTANCE/webhook/aethelgard-generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conceptId",
+              "value": "={{ $json.conceptId }}"
+            },
+            {
+              "name": "conceptName",
+              "value": "={{ $json.conceptName }}"
+            },
+            {
+              "name": "domain",
+              "value": "={{ $json.domain }}"
+            },
+            {
+              "name": "subdomain",
+              "value": "={{ $json.subdomain }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2000,
+        300
+      ],
+      "id": "trigger-layer1",
+      "name": "Trigger Layer 1 Generation",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_N8N_AUTH_ID",
+          "name": "n8n API Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -1800,
+        300
+      ],
+      "id": "wait-layer1",
+      "name": "Wait for Layer 1 (10s)",
+      "webhookId": "wait-layer1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.layers }}",
+              "operation": "contains",
+              "value2": "layer2"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        300
+      ],
+      "id": "check-layer2",
+      "name": "Generate Layer 2?"
+    },
+    {
+      "parameters": {
+        "url": "=https://YOUR_N8N_INSTANCE/webhook/aethelgard-generate-layer2",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conceptId",
+              "value": "={{ $json.conceptId }}"
+            },
+            {
+              "name": "layer1FileId",
+              "value": "={{ $json.layer1FileId }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1400,
+        200
+      ],
+      "id": "trigger-layer2",
+      "name": "Trigger Layer 2"
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        200
+      ],
+      "id": "wait-layer2",
+      "name": "Wait for Layer 2 (15s)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.layers }}",
+              "operation": "contains",
+              "value2": "rag"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "check-rag",
+      "name": "Generate RAG?"
+    },
+    {
+      "parameters": {
+        "url": "=https://YOUR_N8N_INSTANCE/webhook/aethelgard-enrich-rag",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conceptId",
+              "value": "={{ $json.conceptId }}"
+            },
+            {
+              "name": "sourceFileId",
+              "value": "={{ $json.layer2FileId || $json.layer1FileId }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -800,
+        100
+      ],
+      "id": "trigger-rag",
+      "name": "Trigger RAG Enrichment"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.layers }}",
+              "operation": "contains",
+              "value2": "layer3"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        300
+      ],
+      "id": "check-layer3",
+      "name": "Generate Layer 3?"
+    },
+    {
+      "parameters": {
+        "url": "=https://YOUR_N8N_INSTANCE/webhook/aethelgard-generate-layer3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conceptId",
+              "value": "={{ $json.conceptId }}"
+            },
+            {
+              "name": "layer2FileId",
+              "value": "={{ $json.layer2FileId }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "trigger-layer3",
+      "name": "Trigger Layer 3"
+    },
+    {
+      "parameters": {
+        "amount": 20,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        200
+      ],
+      "id": "wait-layer3",
+      "name": "Wait for Layer 3 (20s)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"success\": true,\n  \"message\": \"Orchestration complete\",\n  \"conceptsProcessed\": $items().length,\n  \"concepts\": $items().map(item => ({\n    conceptId: item.json.conceptId,\n    conceptName: item.json.conceptName,\n    layersGenerated: item.json.layers\n  }))\n} }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Curriculum",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Curriculum": {
+      "main": [
+        [
+          {
+            "node": "Read Progress Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Progress Tracker": {
+      "main": [
+        [
+          {
+            "node": "Select Concepts to Process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Concepts to Process": {
+      "main": [
+        [
+          {
+            "node": "Trigger Layer 1 Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Layer 1 Generation": {
+      "main": [
+        [
+          {
+            "node": "Wait for Layer 1 (10s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Layer 1 (10s)": {
+      "main": [
+        [
+          {
+            "node": "Generate Layer 2?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Layer 2?": {
+      "main": [
+        [
+          {
+            "node": "Trigger Layer 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Layer 3?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Layer 2": {
+      "main": [
+        [
+          {
+            "node": "Wait for Layer 2 (15s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Layer 2 (15s)": {
+      "main": [
+        [
+          {
+            "node": "Generate RAG?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate RAG?": {
+      "main": [
+        [
+          {
+            "node": "Trigger RAG Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Layer 3?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger RAG Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Generate Layer 3?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Layer 3?": {
+      "main": [
+        [
+          {
+            "node": "Trigger Layer 3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Layer 3": {
+      "main": [
+        [
+          {
+            "node": "Wait for Layer 3 (20s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Layer 3 (20s)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "orchestrator-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6eba3b68dafdb2b2f3d7bb56cb7beb02af714cb08ffcd6ccca73705d7806808"
+  },
+  "id": "AethelgardOrchestrator",
+  "tags": []
+}

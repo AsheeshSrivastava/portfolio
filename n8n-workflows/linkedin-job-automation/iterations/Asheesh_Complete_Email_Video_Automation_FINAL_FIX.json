@@ -1,0 +1,680 @@
+{
+  "name": "Asheesh_Email_Video_Job_Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 3 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1560,
+        600
+      ],
+      "id": "schedule-trigger-daily",
+      "name": "Schedule (Daily 3 AM)"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "query",
+        "query": "from:jobs-listings@linkedin.com is:unread subject:\"new jobs\"",
+        "limit": 50,
+        "simplify": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1360,
+        600
+      ],
+      "id": "gmail-get-message-ids",
+      "name": "Get LinkedIn Email IDs"
+    },
+    {
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=full",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1160,
+        600
+      ],
+      "id": "fetch-full-email",
+      "name": "Fetch Full Email via API"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract LinkedIn job URLs from Gmail email (full API response)\n\n// Helper function to decode base64\nfunction decodeBase64(str) {\n  try {\n    return Buffer.from(str.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8');\n  } catch (e) {\n    return '';\n  }\n}\n\n// Get email data from Gmail API full response\nconst email = $input.item.json;\nlet emailBody = '';\n\n// Extract HTML body from Gmail payload\nif (email.payload && email.payload.parts) {\n  // Multi-part email - find HTML part\n  for (const part of email.payload.parts) {\n    if (part.mimeType === 'text/html' && part.body && part.body.data) {\n      emailBody = decodeBase64(part.body.data);\n      break;\n    } else if (part.mimeType === 'text/plain' && !emailBody && part.body && part.body.data) {\n      // Fallback to plain text if HTML not found\n      emailBody = decodeBase64(part.body.data);\n    } else if (part.parts) {\n      // Nested parts (like multipart/related)\n      for (const subpart of part.parts) {\n        if (subpart.mimeType === 'text/html' && subpart.body && subpart.body.data) {\n          emailBody = decodeBase64(subpart.body.data);\n          break;\n        }\n      }\n      if (emailBody) break;\n    }\n  }\n} else if (email.payload && email.payload.body && email.payload.body.data) {\n  // Single-part email\n  emailBody = decodeBase64(email.payload.body.data);\n}\n\n// Extract LinkedIn job URLs\nconst urlPattern = /https:\\/\\/(?:www\\.)?linkedin\\.com\\/jobs\\/view\\/\\d+/g;\nconst urls = emailBody.match(urlPattern) || [];\n\n// Remove duplicates\nconst uniqueUrls = [...new Set(urls)];\n\n// Return array of job URLs\nif (uniqueUrls.length === 0) {\n  return [];\n}\n\nreturn uniqueUrls.map(url => ({ \n  json: { \n    jobUrl: url,\n    emailId: email.id,\n    emailDate: email.internalDate || new Date().toISOString()\n  } \n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        600
+      ],
+      "id": "extract-job-urls",
+      "name": "Extract Job URLs"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.jobUrl }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -760,
+        600
+      ],
+      "id": "scrape-job-page",
+      "name": "Scrape Job Page"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an intelligent bot capable of extracting structured data from LinkedIn job listing pages.",
+              "role": "system"
+            },
+            {
+              "content": "=Here's the job page HTML:\\n{{ $json.data }}"
+            },
+            {
+              "content": "Extract the job details and return JSON with this exact structure:\\n\\n{\\n  \"company_name\": \"\",\\n  \"job_title\": \"\",\\n  \"benefits\": \"\",\\n  \"job_description\": \"\",\\n  \"location\": \"\",\\n  \"salary_range\": \"\"\\n}\\n\\nFor job_description: Summarize key responsibilities and requirements in 200 characters or less.\\nFor benefits: List benefits separated by commas (401K, medical, remote work, etc).\\nIf salary_range is not mentioned, use empty string.",
+              "role": "assistant"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -560,
+        600
+      ],
+      "id": "extract-job-data",
+      "name": "Extract Job Data"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an intelligent bot rating how closely a job listing matches a candidate's profile on a scale of 0-5.\\n\\nScoring Criteria:\\n- 2 points: Skills match perfectly (systems thinking, AI/ML, product architecture) [1 point for partial match]\\n- 1 point: Right experience level (4-8 years for mid-senior roles)\\n- 1 point: Remote or hybrid work option\\n- 1 point: Job role aligns with past experience (program leadership, product, AI/ML)\\n- 1 point: Technical skills align (Python, AI/ML, systems thinking, product architecture)\\n- 1 point: Company/sector matches preferences (Ed-Tech, AI-first, learning products, startup/scale-up)\\n\\nBonus considerations:\\n- AI Product Manager or Technical PM roles: +0.5\\n- Startup/scale-up environment: +0.5\\n- Salary range ₹8-12 LPA or above: Mention in explanation\\n- January 2026 start date compatible: Mention in explanation\\n\\nReturn JSON with:\\n{\\n  \"rating\": <number 0-5>,\\n  \"explanation\": \"<2-3 sentence explanation of why this score, highlighting strengths and any concerns>\"\\n}",
+              "role": "system"
+            },
+            {
+              "content": "=Here's the job listing details:\\n\\nJob Title: {{ $json.message.content.job_title }}\\nCompany: {{ $json.message.content.company_name }}\\nLocation: {{ $json.message.content.location }}\\nJob Description: {{ $json.message.content.job_description }}\\nBenefits: {{ $json.message.content.benefits }}\\nSalary Range: {{ $json.message.content.salary_range }}\\n\\nCandidate Profile:\\n\\\"\\\"\\\"\\nAsheesh Ranjan Srivastava - AI-Native Builder & Founder\\n\\nOVERVIEW:\\nAI-native builder with 6+ years in data analysis and program leadership. Founder of Quest & Crossfire, building AI-powered learning platforms. Currently completing MS in Computer Science (AI/ML) and OutSkill AI Engineering Bootcamp 2025.\\n\\nTARGET ROLES: AI Product Manager | Technical Product Manager (AI/ML) | AI Solutions Architect | Ed-Tech Product\\nAVAILABLE: January 2026\\nSALARY: ₹8-12 LPA\\nLOCATION: Remote-first or Lucknow | Willing to relocate\\n\\nCORE SKILLS:\\n- Systems Thinking & Product Architecture\\n- AI-Native Development & AI Collaboration  \\n- Data Analysis & MIS Design\\n- Program Leadership (led 10-member teams)\\n- Capacity Building (trained 400+ professionals)\\n- Workflow Automation\\n\\nTECHNICAL STACK:\\n- Languages: Python\\n- AI/ML: OpenAI API, Hugging Face Transformers, GPT-3.5, BART, T5, Pegasus\\n- Frameworks: Streamlit, Gradio\\n- Automation: n8n, Workflow Design\\n- Data: Power BI, Excel, MIS Systems\\n- Tools: Git, Obsidian\\n\\nRECENT PROJECTS (2025):\\n1. Multi-Model Text Summarization (4 AI models, 83% cost reduction)\\n2. Multi-Persona Chatbot (Live: questandcrossfire.com/chatbot)\\n3. Obsidian AI Assistant (Live: questandcrossfire.com/obsidian)\\n4. Quest & Crossfire Platform (85% MVP, launching Q1 2026)\\n\\nEXPERIENCE HIGHLIGHTS:\\n- Quest & Crossfire: Founder (June 2025 - Present)\\n- Finish Society: M&E Executive (2021-2022) - Dashboards, MIS optimization\\n- Piramal Foundation: Program Leader (2018-2020) - Led teams, trained 400+ professionals, coordinated 5 states\\n- Kaivalya Education Foundation: Gandhi Fellow (2016-2018) - Data-driven coaching, capacity building\\n\\nKEY ACHIEVEMENTS:\\n- 6+ years data/program leadership\\n- 400+ professionals trained\\n- 10-member teams led\\n- 2 production AI apps deployed (3 weeks)\\n- Scaled programs across 5 states\\n- 50+ teachers coached\\n\\nEDUCATION:\\n- MS Computer Science (AI/ML) - Woolf University (2025-2027) - In Progress\\n- Master's Development Studies - IIT Guwahati (2014-2016)\\n- B.Sc. Industrial Chemistry - Delhi University (2010-2014)\\n\\nCERTIFICATIONS:\\n- OutSkill AI Engineering Bootcamp 2025\\n- Business Intelligence using Power BI\\n- Python for Data Science\\n- Public Policy and Social Change\\n\\nAPPROACH:\\n\\\"I'm an AI-native builder. I architect systems and partner with AI to implement them. This approach shipped production-ready platform in 3 weeks instead of months.\\\"\\n\\nPREFERENCES:\\n- Remote-first or hybrid culture\\n- Ed-Tech, Learning Products, or AI-first companies\\n- Startup/scale-up environment\\n- Mission: Products that help people learn, grow, navigate complexity\\n\\\"\\\"\\\""
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -360,
+        600
+      ],
+      "id": "rate-job-match",
+      "name": "Rate Job Match"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an expert at creating personalized, compelling cover letters for AI Product Manager roles.\\n\\nCreate a cover letter that:\\n1. Shows genuine interest in the specific role and company\\n2. Highlights relevant experience (don't just repeat resume)\\n3. Demonstrates understanding of the role requirements\\n4. Shows personality and authentic voice (reflective, honest, systematic)\\n5. Connects candidate's AI-native approach to company mission\\n6. Mentions Quest & Crossfire and recent AI projects as proof of skills\\n7. Keep it concise (300-400 words maximum)\\n8. Professional but conversational tone\\n\\nAvoid:\\n- Generic phrases like \\\"I am writing to apply\\\"\\n- Simply listing resume bullets\\n- Over-the-top enthusiasm or buzzwords\\n- Being too formal or stiff\\n\\nReturn JSON:\\n{\\n  \\\"cover_letter\\\": \\\"<the complete cover letter text here>\\\"\\n}",
+              "role": "system"
+            },
+            {
+              "content": "=Create a cover letter for this job:\\n\\nJob Title: {{ $('Extract Job Data').item.json.message.content.job_title }}\\nCompany: {{ $('Extract Job Data').item.json.message.content.company_name }}\\nLocation: {{ $('Extract Job Data').item.json.message.content.location }}\\nJob Description: {{ $('Extract Job Data').item.json.message.content.job_description }}\\nBenefits: {{ $('Extract Job Data').item.json.message.content.benefits }}\\nSalary: {{ $('Extract Job Data').item.json.message.content.salary_range }}\\n\\nCandidate Profile:\\n\\\"\\\"\\\"\\nAsheesh Ranjan Srivastava\\nFounder, Quest & Crossfire | AI-Native Builder\\nEmail: asheesh.srivastava@questandcrossfire.com\\nLinkedIn: linkedin.com/in/asheesh-ranjan-srivastava\\nGitHub: github.com/AsheeshSrivatava\\nPortfolio: questandcrossfire.com\\n\\nPROFESSIONAL SUMMARY:\\nAI-native builder with 6+ years combining systems thinking with AI collaboration to build products that help people learn and grow. Founder of Quest & Crossfire, currently building AI-powered learning platform while completing MS in Computer Science (AI/ML).\\n\\nWHAT I BRING:\\n- Systems Thinking: Trained 400+ professionals, led 10-member teams, scaled programs across 5 states\\n- AI-Native Development: Shipped 2 production apps in 3 weeks (questandcrossfire.com/obsidian & /chatbot)\\n- Product Architecture: 85% MVP platform, launching Q1 2026\\n- Data-Driven Leadership: 6+ years data analysis, MIS design, capacity building\\n\\nRECENT WORK:\\n- Built Multi-Persona Chatbot with 4 AI personas, real-time streaming (Live)\\n- Developed Multi-Model Text Summarization with 83% cost reduction\\n- Created Obsidian AI Learning Assistant with dual AI providers (Live)\\n- Building Quest & Crossfire: AI learning platform for Python & AI engineering\\n\\nTECHNICAL: Python, OpenAI API, Hugging Face, Streamlit, n8n automation, Power BI\\n\\nAPPROACH:\\n\\\"I architect systems and partner with AI to implement them. I focus on vision, users, and architecture - AI handles implementation. This shipped production platform in 3 weeks vs months.\\\"\\n\\nEXPERIENCE:\\n- Quest & Crossfire: Founder (2025-Present) - AI learning platform\\n- Piramal Foundation: Program Leader (2018-2020) - Led teams, trained 400+\\n- Kaivalya Education: Gandhi Fellow (2016-2018) - Data-driven coaching\\n- Finish Society: M&E Executive (2021-2022) - Dashboards, MIS\\n\\nEDUCATION:\\n- MS Computer Science (AI/ML) - Woolf University (2025-2027)\\n- Master's Development Studies - IIT Guwahati\\n- OutSkill AI Engineering Bootcamp 2025\\n\\nPHILOSOPHY:\\nQuest & Crossfire tagline: \\\"Small fixes, big clarity\\\" - turning chaos into progress through evolving systems.\\n\\nAVAILABLE: January 2026\\n\\\"\\\"\\\""
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -160,
+        600
+      ],
+      "id": "generate-cover-letter",
+      "name": "Generate Cover Letter"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are an expert at converting written cover letters into natural, engaging video scripts for job applications.\\n\\nConvert this cover letter into a 60-90 second video script that:\\n1. Sounds natural when spoken (conversational, not formal)\\n2. Uses first-person present tense\\n3. Has clear pauses for emphasis (mark with [pause])\\n4. Removes written-only phrases (e.g., \\\"I am writing to apply\\\")\\n5. Emphasizes key achievements with energy\\n6. Ends with clear call to action\\n7. Stays within 60-90 seconds when spoken at normal pace (150-200 words)\\n\\nReturn ONLY the video script in JSON format:\\n{\\n  \\\"video_script\\\": \\\"<the speaking script with [pause] markers>\\\"\\n}\\n\\nFormat: Natural speaking style with [pause] markers.\\nLength: 150-200 words (= 60-90 seconds).",
+              "role": "system"
+            },
+            {
+              "content": "=Convert this cover letter into a video script:\\n\\n{{ $json.message.content.cover_letter }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        40,
+        600
+      ],
+      "id": "create-video-script",
+      "name": "Create Video Script"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-rating-threshold",
+              "leftValue": "={{ $('Rate Job Match').item.json.message.content.rating }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        240,
+        600
+      ],
+      "id": "check-if-generate-video",
+      "name": "IF Rating >= 4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $credentials.heygenApi.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "video_inputs",
+              "value": "=[{\"character\": {\"type\": \"avatar\", \"avatar_id\": \"YOUR_AVATAR_ID_HERE\", \"avatar_style\": \"normal\"}, \"voice\": {\"type\": \"text\", \"input_text\": \"{{ $('Create Video Script').item.json.message.content.video_script }}\", \"voice_id\": \"default_voice\"}}]"
+            },
+            {
+              "name": "dimension",
+              "value": "={\"width\": 1280, \"height\": 720}"
+            },
+            {
+              "name": "aspect_ratio",
+              "value": "16:9"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        520
+      ],
+      "id": "generate-video-heygen",
+      "name": "Generate Video (HeyGen)"
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        520
+      ],
+      "id": "wait-for-video-processing",
+      "name": "Wait 30 Seconds"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.heygen.com/v1/video_status.get?video_id={{ $('Generate Video (HeyGen)').item.json.data.video_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{ $credentials.heygenApi.apiKey }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        840,
+        520
+      ],
+      "id": "check-video-status",
+      "name": "Check Video Status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-video-complete",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        520
+      ],
+      "id": "check-if-video-ready",
+      "name": "IF Video Complete"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1xMELeUYUcGrqctnCQSWOuB586k1NHth0mgLhUVRu6EI",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $('Extract Job Data').item.json.message.content.job_title }}",
+            "Job Description": "={{ $('Extract Job Data').item.json.message.content.job_description }}",
+            "Link": "={{ $('Extract Job URLs').item.json.jobUrl }}",
+            "Date": "={{ $now.toISO() }}",
+            "Rating": "={{ $('Rate Job Match').item.json.message.content.rating }}",
+            "Company Name": "={{ $('Extract Job Data').item.json.message.content.company_name }}",
+            "Benefits": "={{ $('Extract Job Data').item.json.message.content.benefits }}",
+            "Location": "={{ $('Extract Job Data').item.json.message.content.location }}",
+            "Match Explanation": "={{ $('Rate Job Match').item.json.message.content.explanation }}",
+            "Cover Letter": "={{ $('Generate Cover Letter').item.json.message.content.cover_letter }}",
+            "Video Script": "={{ $('Create Video Script').item.json.message.content.video_script }}",
+            "Video URL": "={{ $('Check Video Status').item.json.data.video_url || 'Rating < 4 - No video generated' }}"
+          },
+          "matchingColumns": [
+            "Link"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        600
+      ],
+      "id": "save-to-google-sheet",
+      "name": "Save to Google Sheet"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Extract Job URLs').item.json.emailId }}",
+        "labelIds": [
+          "INBOX"
+        ],
+        "options": {
+          "markAsRead": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1640,
+        600
+      ],
+      "id": "mark-email-read",
+      "name": "Mark Email as Read"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1xMELeUYUcGrqctnCQSWOuB586k1NHth0mgLhUVRu6EI",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $('Extract Job Data').item.json.message.content.job_title }}",
+            "Job Description": "={{ $('Extract Job Data').item.json.message.content.job_description }}",
+            "Link": "={{ $('Extract Job URLs').item.json.jobUrl }}",
+            "Date": "={{ $now.toISO() }}",
+            "Rating": "={{ $('Rate Job Match').item.json.message.content.rating }}",
+            "Company Name": "={{ $('Extract Job Data').item.json.message.content.company_name }}",
+            "Benefits": "={{ $('Extract Job Data').item.json.message.content.benefits }}",
+            "Location": "={{ $('Extract Job Data').item.json.message.content.location }}",
+            "Match Explanation": "={{ $('Rate Job Match').item.json.message.content.explanation }}",
+            "Cover Letter": "={{ $('Generate Cover Letter').item.json.message.content.cover_letter }}",
+            "Video Script": "={{ $('Create Video Script').item.json.message.content.video_script }}",
+            "Video URL": "Rating < 4 - No video generated"
+          },
+          "matchingColumns": [
+            "Link"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        440,
+        680
+      ],
+      "id": "save-without-video",
+      "name": "Save to Sheet (No Video)"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule (Daily 3 AM)": {
+      "main": [
+        [
+          {
+            "node": "Get LinkedIn Email IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get LinkedIn Email IDs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Full Email via API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Full Email via API": {
+      "main": [
+        [
+          {
+            "node": "Extract Job URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Job URLs": {
+      "main": [
+        [
+          {
+            "node": "Scrape Job Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Job Page": {
+      "main": [
+        [
+          {
+            "node": "Extract Job Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Job Data": {
+      "main": [
+        [
+          {
+            "node": "Rate Job Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Job Match": {
+      "main": [
+        [
+          {
+            "node": "Generate Cover Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Cover Letter": {
+      "main": [
+        [
+          {
+            "node": "Create Video Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Video Script": {
+      "main": [
+        [
+          {
+            "node": "IF Rating >= 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Rating >= 4": {
+      "main": [
+        [
+          {
+            "node": "Generate Video (HeyGen)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save to Sheet (No Video)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Video (HeyGen)": {
+      "main": [
+        [
+          {
+            "node": "Wait 30 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Check Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Video Status": {
+      "main": [
+        [
+          {
+            "node": "IF Video Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Video Complete": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 30 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Mark Email as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Sheet (No Video)": {
+      "main": [
+        [
+          {
+            "node": "Mark Email as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "your_n8n_instance_id"
+  },
+  "tags": []
+}
